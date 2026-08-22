@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { GALLERY_IMAGES, type GalleryImage } from "@/lib/salon";
 import { BookAppointmentCta } from "@/components/cta-buttons";
+import { GalleryLightbox } from "@/components/gallery-lightbox";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -35,6 +36,7 @@ function matchesFilter(img: GalleryImage, filter: Filter): boolean {
 
 function GalleryPage() {
   const [filter, setFilter] = useState<Filter>("All");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const visible = GALLERY_IMAGES.filter((img) => matchesFilter(img, filter));
 
   return (
@@ -75,17 +77,24 @@ function GalleryPage() {
         </div>
 
         <div className="mt-10 columns-2 gap-4 lg:columns-3 [&>figure]:mb-4">
-          {visible.map((img) => (
+          {visible.map((img, i) => (
             <figure
               key={img.src}
               className="break-inside-avoid overflow-hidden rounded-xl shadow-elegant"
             >
-              <img
-                src={img.src}
-                alt={img.alt}
-                className="w-full object-cover transition-transform duration-500 hover:scale-105"
-                loading="lazy"
-              />
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(i)}
+                aria-label={`View photo: ${img.caption}`}
+                className="block w-full cursor-zoom-in"
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  className="w-full object-cover transition-transform duration-500 hover:scale-105"
+                  loading="lazy"
+                />
+              </button>
             </figure>
           ))}
         </div>
@@ -99,6 +108,15 @@ function GalleryPage() {
           </div>
         </div>
       </section>
+
+      {lightboxIndex !== null && (
+        <GalleryLightbox
+          images={visible}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
+      )}
     </>
   );
 }

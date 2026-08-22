@@ -25,6 +25,19 @@ export const Route = createFileRoute("/bridal")({
       { property: "og:url", content: "/bridal" },
     ],
     links: [{ rel: "canonical", href: "/bridal" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: "Bridal Makeup & Hairstyling",
+          description:
+            "Complete bridal experience — HD makeup, hairstyling, draping and pre-bridal packages.",
+          provider: { "@type": "HairSalon", name: "Sagar Family Salon" },
+        }),
+      },
+    ],
   }),
   component: BridalPage,
 });

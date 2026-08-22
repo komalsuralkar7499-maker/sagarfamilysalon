@@ -128,22 +128,6 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     ],
   },
   {
-    title: "Waxing",
-    description: "Gentle, hygienic hair removal for smooth skin.",
-    services: ["Full arms", "Full legs", "Underarms", "Face & threading"],
-  },
-  {
-    title: "Manicure & Pedicure",
-    description:
-      "Relaxing hand and foot care that leaves your nails clean, shaped and polished.",
-    services: [
-      "Classic manicure",
-      "Classic pedicure",
-      "Spa manicure",
-      "Spa pedicure",
-    ],
-  },
-  {
     title: "Makeup",
     description:
       "Flawless makeup for every occasion — from subtle party looks to full glam.",

@@ -16,6 +16,7 @@ export const SALON = {
   // Contact details — to be filled in once provided by the owner.
   phone: "",
   whatsapp: "", // e.g. "919999999999" (country code + number, no +)
+  email: "", // booking notification email, e.g. "bookings@example.com"
   address: "",
   mapsUrl: "",
   hours: "",
@@ -33,6 +34,7 @@ export function whatsappLink(message?: string): string {
 export type GalleryImage = {
   src: string;
   alt: string;
+  caption: string;
   category: "Salon" | "Hair" | "Styling";
 };
 
@@ -40,58 +42,75 @@ export const GALLERY_IMAGES: GalleryImage[] = [
   {
     src: storefrontAsset.url,
     alt: "Sagar Family Salon storefront — internationally certified experts in hair & skin",
+    caption: "Our storefront — internationally certified experts in hair & skin",
     category: "Salon",
   },
   {
     src: interiorChairsAsset.url,
     alt: "Styling chairs and workstations inside Sagar Family Salon",
+    caption: "Modern styling chairs and advanced skincare equipment",
     category: "Salon",
   },
   {
     src: interiorShelfAsset.url,
     alt: "Professional haircare and skincare product shelves at Sagar Family Salon",
+    caption: "Professional haircare & skincare products we trust",
     category: "Salon",
   },
   {
     src: equipmentAsset.url,
     alt: "Advanced skin treatment and Hydra Beauty equipment at Sagar Family Salon",
+    caption: "Advanced Hydra Beauty skin treatment technology",
     category: "Salon",
   },
   {
     src: workBalayageAsset.url,
     alt: "Caramel balayage highlights with soft curls by Sagar Family Salon",
+    caption: "Caramel balayage with soft curls",
     category: "Hair",
   },
   {
     src: workWomensCutAsset.url,
     alt: "Women's layered haircut and blowout styling at Sagar Family Salon",
+    caption: "Fresh layered haircut, styled to finish",
     category: "Hair",
   },
   {
     src: workBangsAsset.url,
     alt: "Fresh haircut with curtain bangs styled at Sagar Family Salon",
+    caption: "New curtain bangs for a happy guest",
     category: "Styling",
   },
   {
     src: workFinishAsset.url,
     alt: "Sleek women's haircut finish by the Sagar Family Salon styling team",
+    caption: "A finished blowout, ready for the day",
     category: "Styling",
   },
   {
     src: workKidsAsset.url,
     alt: "Happy young guest after a kids' haircut at Sagar Family Salon",
+    caption: "Thumbs up after a kids' haircut",
     category: "Styling",
   },
 ];
 
+export type Faq = {
+  question: string;
+  answer: string;
+};
+
 export type ServiceCategory = {
+  id: string;
   title: string;
   description: string;
   services: string[];
+  faqs: Faq[];
 };
 
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
   {
+    id: "haircut-styling",
     title: "Haircut & Styling",
     description:
       "Precision cuts and styling for men, women and kids — tailored to your face shape and lifestyle.",
@@ -102,8 +121,26 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Blow-dry & styling",
       "Beard trim & shaping",
     ],
+    faqs: [
+      {
+        question: "How often should I get a haircut?",
+        answer:
+          "For most styles, every 4–6 weeks keeps the shape fresh. Shorter styles and fades may need a tidy-up every 2–3 weeks.",
+      },
+      {
+        question: "Do you cut children's hair?",
+        answer:
+          "Yes — we're a family salon and love having young guests. Our stylists are patient and make the experience fun and comfortable for kids.",
+      },
+      {
+        question: "Should I wash my hair before my appointment?",
+        answer:
+          "There's no need — we wash and prep your hair at the salon as part of the service, so just come as you are.",
+      },
+    ],
   },
   {
+    id: "hair-colour",
     title: "Hair Colour",
     description:
       "From natural grey coverage to fashion highlights and balayage, using professional colour ranges.",
@@ -114,8 +151,26 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Grey coverage",
       "Hair spa & treatments",
     ],
+    faqs: [
+      {
+        question: "How long does hair colour last?",
+        answer:
+          "Global colour typically stays vibrant for 4–8 weeks depending on the shade and your hair care routine. Balayage grows out softly and can last much longer between visits.",
+      },
+      {
+        question: "Will colouring damage my hair?",
+        answer:
+          "We use professional-grade colour and always assess your hair's condition first. Pairing colour with a hair spa or treatment keeps it healthy, soft and shiny.",
+      },
+      {
+        question: "Do I need a patch test?",
+        answer:
+          "Yes — for your safety we recommend a quick patch test at least 24–48 hours before your first colour service with us. It's free and takes only a minute.",
+      },
+    ],
   },
   {
+    id: "facial-cleanup",
     title: "Facial & Cleanup",
     description:
       "Skin care powered by professional products and advanced Hydra Beauty technology.",
@@ -126,8 +181,26 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "De-tan treatment",
       "Skin polishing",
     ],
+    faqs: [
+      {
+        question: "What's the difference between a cleanup and a facial?",
+        answer:
+          "A cleanup is a quick refresh — cleansing, exfoliation and hydration in about 30 minutes. A facial is a deeper, longer treatment that targets specific concerns like dullness, tanning or dryness.",
+      },
+      {
+        question: "Is the Hydra facial suitable for sensitive skin?",
+        answer:
+          "Yes. The Hydra Beauty treatment is gentle and non-irritating, and our team adjusts the products and intensity to suit your skin type after a quick consultation.",
+      },
+      {
+        question: "How often should I get a facial?",
+        answer:
+          "Once every 4–6 weeks is ideal for most skin types, matching your skin's natural renewal cycle.",
+      },
+    ],
   },
   {
+    id: "makeup",
     title: "Makeup",
     description:
       "Flawless makeup for every occasion — from subtle party looks to full glam.",
@@ -137,8 +210,26 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Eye makeup",
       "Saree draping",
     ],
+    faqs: [
+      {
+        question: "How long does a makeup session take?",
+        answer:
+          "A party or engagement look usually takes 60–90 minutes. We recommend arriving with a clean, moisturised face for the best result.",
+      },
+      {
+        question: "Can you match a look from a photo?",
+        answer:
+          "Absolutely — bring a reference photo and our makeup artist will adapt the look to suit your features, outfit and the occasion.",
+      },
+      {
+        question: "Do you offer saree draping on its own?",
+        answer:
+          "Yes, you can book saree draping separately or together with any makeup service.",
+      },
+    ],
   },
   {
+    id: "bridal-makeup",
     title: "Bridal Makeup",
     description:
       "A complete bridal experience — HD makeup, hairstyling and draping for your big day.",
@@ -148,8 +239,26 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Pre-bridal packages",
       "Groom styling",
     ],
+    faqs: [
+      {
+        question: "How early should I book my bridal makeup?",
+        answer:
+          "We recommend booking 4–8 weeks in advance, especially during wedding season, so we can reserve your date and plan a trial session.",
+      },
+      {
+        question: "Do you offer a bridal trial?",
+        answer:
+          "Yes — a trial lets us finalise your look, test products on your skin and make sure everything is perfect before the big day.",
+      },
+      {
+        question: "What's included in pre-bridal packages?",
+        answer:
+          "Pre-bridal packages combine facials, de-tan, hair spa and polishing sessions in the weeks leading up to your wedding. We customise the plan after a consultation.",
+      },
+    ],
   },
   {
+    id: "hairstyling",
     title: "Hairstyling",
     description:
       "Occasion-ready hairstyles, from elegant buns to soft curls and braids.",
@@ -158,6 +267,23 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       "Braids & buns",
       "Occasion hairstyling",
       "Hair ironing & smoothening",
+    ],
+    faqs: [
+      {
+        question: "Can you recreate a hairstyle from a photo?",
+        answer:
+          "Yes — show us a reference and we'll adapt it to your hair length, texture and the occasion.",
+      },
+      {
+        question: "How long does occasion styling take?",
+        answer:
+          "Most styles take 30–60 minutes. Intricate braids or bridal hairstyles can take a little longer — we'll confirm the timing when you book.",
+      },
+      {
+        question: "How long does hair smoothening last?",
+        answer:
+          "Smoothening typically lasts 3–6 months depending on your hair type and aftercare. We'll recommend the right aftercare products to make it last.",
+      },
     ],
   },
 ];

@@ -1,7 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
-import { SERVICE_CATEGORIES } from "@/lib/salon";
+import { SALON, SERVICE_CATEGORIES } from "@/lib/salon";
 import { BookAppointmentCta, WhatsAppCta } from "@/components/cta-buttons";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/services")({
   head: () => ({
@@ -22,6 +28,26 @@ export const Route = createFileRoute("/services")({
       { property: "og:url", content: "/services" },
     ],
     links: [{ rel: "canonical", href: "/services" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Services at Sagar Family Salon",
+          itemListElement: SERVICE_CATEGORIES.map((cat, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            item: {
+              "@type": "Service",
+              name: cat.title,
+              description: cat.description,
+              provider: { "@type": "HairSalon", name: SALON.name },
+            },
+          })),
+        }),
+      },
+    ],
   }),
   component: ServicesPage,
 });
@@ -65,6 +91,73 @@ function ServicesPage() {
                   </li>
                 ))}
               </ul>
+              <a
+                href={`#${cat.id}`}
+                className="mt-5 inline-block text-sm font-semibold text-primary hover:underline"
+              >
+                Details & FAQs →
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6 lg:pb-20">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-[0.3em] text-primary">
+            In detail
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">
+            What to expect, <span className="text-gold-gradient">answered</span>
+          </h2>
+        </div>
+
+        <div className="mt-12 space-y-12">
+          {SERVICE_CATEGORIES.map((cat) => (
+            <article
+              key={cat.id}
+              id={cat.id}
+              className="scroll-mt-24 rounded-3xl bg-card p-6 shadow-elegant sm:p-10"
+            >
+              <h3 className="font-display text-2xl font-bold sm:text-3xl">
+                {cat.title}
+              </h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                {cat.description}
+              </p>
+              <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                {cat.services.map((s) => (
+                  <li key={s} className="flex items-start gap-2.5 text-sm">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <h4 className="mt-8 font-display text-lg font-semibold">
+                Frequently asked questions
+              </h4>
+              <Accordion type="single" collapsible className="mt-2">
+                {cat.faqs.map((faq, i) => (
+                  <AccordionItem key={faq.question} value={`${cat.id}-${i}`}>
+                    <AccordionTrigger className="text-left text-sm font-medium">
+                      {faq.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                      {faq.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+
+              <div className="mt-6">
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-gold transition-transform hover:scale-[1.03]"
+                >
+                  Book {cat.title}
+                </Link>
+              </div>
             </article>
           ))}
         </div>

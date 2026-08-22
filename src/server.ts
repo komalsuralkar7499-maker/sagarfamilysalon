@@ -76,7 +76,8 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "Content-Security-Policy": CONTENT_SECURITY_POLICY,
   "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "SAMEORIGIN",
+  // DENY (not SAMEORIGIN): this site never embeds itself in an iframe.
+  "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   // This site uses no camera, mic, geolocation or payment APIs.
   "Permissions-Policy":

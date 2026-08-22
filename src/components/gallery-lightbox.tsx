@@ -68,6 +68,8 @@ export function GalleryLightbox({
     };
   }, [index, hasPrev, hasNext, onClose, onNavigate]);
 
+  if (!image) return null;
+
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });

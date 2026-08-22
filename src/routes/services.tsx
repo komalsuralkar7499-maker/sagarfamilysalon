@@ -10,13 +10,13 @@ export const Route = createFileRoute("/services")({
       {
         name: "description",
         content:
-          "Haircuts & styling, hair colour, facials & cleanups, waxing, manicure & pedicure, makeup and bridal services at Sagar Family Salon.",
+          "Haircuts & styling, hair colour, facials & cleanups, makeup and bridal services at Sagar Family Salon.",
       },
       { property: "og:title", content: "Services — Sagar Family Salon" },
       {
         property: "og:description",
         content:
-          "Haircuts, hair colour, facials, waxing, manicure, pedicure, makeup and bridal services for the whole family.",
+          "Haircuts, hair colour, facials, makeup and bridal services for the whole family.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/services" },

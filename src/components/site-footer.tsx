@@ -49,7 +49,7 @@ export function SiteFooter() {
             <li>Hair Colour</li>
             <li>Facial &amp; Cleanup</li>
             <li>Bridal Makeup</li>
-            <li>Manicure &amp; Pedicure</li>
+            
           </ul>
         </div>
 

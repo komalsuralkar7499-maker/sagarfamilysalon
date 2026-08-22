@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Sagar Family Salon — internationally certified experts in hair & skin. Haircuts, hair colour, facials, waxing, manicure, pedicure and bridal makeup for the whole family.",
+          "Sagar Family Salon — internationally certified experts in hair & skin. Haircuts, hair colour, facials and bridal makeup for the whole family.",
       },
       { property: "og:title", content: "Sagar Family Salon — Expert Hair & Skin Care" },
       {

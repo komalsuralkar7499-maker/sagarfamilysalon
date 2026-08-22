@@ -8,6 +8,7 @@ import {
   whatsappLink,
 } from "@/lib/salon";
 import { BookAppointmentCta } from "@/components/cta-buttons";
+import { BookingForm } from "@/components/booking-form";
 import storefrontAsset from "@/assets/storefront.asset.json";
 
 export const Route = createFileRoute("/contact")({
@@ -58,6 +59,23 @@ function ContactPage() {
           </p>
         </div>
         <div className="gold-rule mx-auto max-w-6xl" />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pt-16 sm:px-6 lg:pt-20" aria-labelledby="booking-form-heading">
+        <div className="rounded-3xl bg-card p-6 shadow-elegant sm:p-10">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 id="booking-form-heading" className="font-display text-3xl font-bold sm:text-4xl">
+              Request an <span className="text-gold-gradient">appointment</span>
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Tell us what you need and when — we'll confirm your slot by email
+              or WhatsApp.
+            </p>
+          </div>
+          <div className="mx-auto mt-8 max-w-2xl">
+            <BookingForm />
+          </div>
+        </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">

@@ -68,12 +68,16 @@ export function GalleryLightbox({
     };
   }, [index, hasPrev, hasNext, onClose, onNavigate]);
 
+  if (!image) return null;
+
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     if (pointers.current.size === 2) {
-      const [a, b] = [...pointers.current.values()];
+      const pts = [...pointers.current.values()];
+      const a = pts[0]!;
+      const b = pts[1]!;
       pinchStart.current = { dist: distance(a, b), scale };
       panStart.current = null;
       swipeStart.current = null;
@@ -93,7 +97,9 @@ export function GalleryLightbox({
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     if (pointers.current.size === 2 && pinchStart.current) {
-      const [a, b] = [...pointers.current.values()];
+      const pts = [...pointers.current.values()];
+      const a = pts[0]!;
+      const b = pts[1]!;
       const ratio = distance(a, b) / pinchStart.current.dist;
       setScale(clamp(pinchStart.current.scale * ratio, MIN_SCALE, MAX_SCALE));
       return;

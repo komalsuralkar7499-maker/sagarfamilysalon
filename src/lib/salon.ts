@@ -13,18 +13,30 @@ export const SALON = {
   name: "Sagar Family Salon",
   tagline: "Expert care in hair & skin for the whole family",
   logo: logoAsset.url,
-  // Contact details — to be filled in once provided by the owner.
-  phone: "",
-  whatsapp: "", // e.g. "919999999999" (country code + number, no +)
-  email: "", // booking notification email, e.g. "bookings@example.com"
-  address: "",
-  mapsUrl: "",
-  hours: "",
+  phone: "+917841950095",
+  whatsapp: "917841950095", // country code + number, no spaces or +
+  email: "", // booking notification email, set via SALON_BOOKING_EMAIL secret
+  address:
+    "Sagar Family Salon, Hakimi Hospital Building, Hanuman Chowk, Near Maharashtra Bank, Malkapur, Maharashtra – 443101",
+  mapsUrl:
+    "https://www.google.com/maps/search/?api=1&query=Sagar+Family+Salon+Hakimi+Hospital+Building+Hanuman+Chowk+Malkapur+Maharashtra+443101",
+  hours: "Monday – Sunday, 10:00 AM – 8:00 PM",
 } as const;
 
 export const HAS_PHONE = SALON.phone.length > 0;
 export const HAS_WHATSAPP = SALON.whatsapp.length > 0;
 export const HAS_ADDRESS = SALON.address.length > 0;
+export const HAS_EMAIL = SALON.email.length > 0;
+
+export function displayPhone(phone: string): string {
+  // Format E.164 Indian mobile as +91 78419 50095
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("91") && cleaned.length === 12) {
+    const digits = cleaned.slice(2);
+    return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+  }
+  return phone;
+}
 
 export function whatsappLink(message?: string): string {
   const base = `https://wa.me/${SALON.whatsapp}`;

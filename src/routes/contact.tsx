@@ -5,7 +5,9 @@ import {
   HAS_PHONE,
   HAS_WHATSAPP,
   HAS_ADDRESS,
+  HAS_EMAIL,
   whatsappLink,
+  displayPhone,
 } from "@/lib/salon";
 import { BookAppointmentCta } from "@/components/cta-buttons";
 import { BookingForm } from "@/components/booking-form";
@@ -18,18 +20,43 @@ export const Route = createFileRoute("/contact")({
       {
         name: "description",
         content:
-          "Contact Sagar Family Salon to book your appointment. Reach us by phone or WhatsApp for haircuts, colour, facials and bridal makeup.",
+          "Contact Sagar Family Salon in Malkapur, Maharashtra. Call or WhatsApp +91 78419 50095 to book your appointment for haircuts, colour, facials and bridal makeup.",
       },
       { property: "og:title", content: "Contact & Book Appointment — Sagar Family Salon" },
       {
         property: "og:description",
         content:
-          "Book your appointment at Sagar Family Salon — haircuts, colour, facials and bridal makeup.",
+          "Book your appointment at Sagar Family Salon — haircuts, colour, facials and bridal makeup in Malkapur, Maharashtra.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/contact" },
     ],
     links: [{ rel: "canonical", href: "/contact" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          name: "Contact Sagar Family Salon",
+          description: "Book appointments and contact Sagar Family Salon in Malkapur.",
+          mainEntity: {
+            "@type": "HairSalon",
+            name: SALON.name,
+            telephone: SALON.phone,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: "Hakimi Hospital Building, Hanuman Chowk, Near Maharashtra Bank",
+              addressLocality: "Malkapur",
+              addressRegion: "Maharashtra",
+              postalCode: "443101",
+              addressCountry: "IN",
+            },
+            url: "/contact",
+          },
+        }),
+      },
+    ],
   }),
   component: ContactPage,
 });
@@ -69,7 +96,7 @@ function ContactPage() {
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Tell us what you need and when — we'll confirm your slot by email
-              or WhatsApp.
+              {HAS_WHATSAPP ? " or WhatsApp" : ""}.
             </p>
           </div>
           <div className="mx-auto mt-8 max-w-2xl">
@@ -78,92 +105,90 @@ function ContactPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-2">
-          <div className="space-y-5">
-            <div className="flex items-start gap-4 rounded-2xl bg-card p-6 shadow-elegant">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <Phone className="h-6 w-6" />
+      <section className="bg-noir py-16 text-noir-foreground sm:py-20 lg:py-24">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <h2 className="mb-10 font-display text-4xl font-bold text-gold">
+            Visit Us
+          </h2>
+          <div className="grid gap-7 md:grid-cols-2">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold">
+                <MapPin className="h-5 w-5" />
               </div>
-              <div className="min-w-0">
-                <h2 className="font-display text-xl font-semibold">Call us</h2>
+              <div>
+                <h3 className="text-lg font-semibold text-gold">Address</h3>
+                {HAS_ADDRESS ? (
+                  <p className="mt-1 leading-relaxed text-noir-muted">
+                    Sagar Family Salon,<br />
+                    Hakimi Hospital Building,<br />
+                    Hanuman Chowk, Near Maharashtra Bank,<br />
+                    Malkapur, Maharashtra – 443101
+                  </p>
+                ) : (
+                  <div className="mt-1">
+                    <PlaceholderNote label="Salon address" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold">
+                <Phone className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gold">Phone</h3>
                 {HAS_PHONE ? (
                   <a
                     href={`tel:${SALON.phone}`}
-                    className="mt-1 block text-lg font-semibold text-primary hover:underline"
+                    className="mt-1 inline-block text-lg font-semibold text-noir-foreground transition hover:text-gold"
                   >
-                    {SALON.phone}
+                    {displayPhone(SALON.phone)}
                   </a>
                 ) : (
-                  <div className="mt-2">
+                  <div className="mt-1">
                     <PlaceholderNote label="Phone number" />
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex items-start gap-4 rounded-2xl bg-card p-6 shadow-elegant">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <MessageCircle className="h-6 w-6" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold">
+                <MessageCircle className="h-5 w-5" />
               </div>
-              <div className="min-w-0">
-                <h2 className="font-display text-xl font-semibold">WhatsApp</h2>
+              <div>
+                <h3 className="text-lg font-semibold text-gold">WhatsApp</h3>
                 {HAS_WHATSAPP ? (
                   <a
                     href={whatsappLink("Hello Sagar Family Salon, I would like to book an appointment.")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-gold transition-transform hover:scale-[1.03]"
+                    className="mt-1 inline-block text-noir-muted transition hover:text-gold"
                   >
-                    <MessageCircle className="h-4 w-4" />
-                    Chat on WhatsApp
+                    Chat with us on WhatsApp
                   </a>
                 ) : (
-                  <div className="mt-2">
+                  <div className="mt-1">
                     <PlaceholderNote label="WhatsApp number" />
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex items-start gap-4 rounded-2xl bg-card p-6 shadow-elegant">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <MapPin className="h-6 w-6" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold">
+                <Clock className="h-5 w-5" />
               </div>
-              <div className="min-w-0">
-                <h2 className="font-display text-xl font-semibold">Visit us</h2>
-                {HAS_ADDRESS ? (
+              <div>
+                <h3 className="text-lg font-semibold text-gold">Business Hours</h3>
+                {SALON.hours ? (
                   <>
-                    <p className="mt-1 text-muted-foreground">{SALON.address}</p>
-                    {SALON.mapsUrl && (
-                      <a
-                        href={SALON.mapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-block font-semibold text-primary hover:underline"
-                      >
-                        Open in Google Maps
-                      </a>
-                    )}
+                    <p className="mt-1 text-noir-muted">Monday – Sunday</p>
+                    <p className="text-noir-muted">10:00 AM – 8:00 PM</p>
                   </>
                 ) : (
-                  <div className="mt-2">
-                    <PlaceholderNote label="Salon address & map link" />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 rounded-2xl bg-card p-6 shadow-elegant">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <Clock className="h-6 w-6" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="font-display text-xl font-semibold">Business hours</h2>
-                {SALON.hours ? (
-                  <p className="mt-1 text-muted-foreground">{SALON.hours}</p>
-                ) : (
-                  <div className="mt-2">
+                  <div className="mt-1">
                     <PlaceholderNote label="Opening hours" />
                   </div>
                 )}
@@ -171,6 +196,26 @@ function ContactPage() {
             </div>
           </div>
 
+          <div className="mt-10">
+            {HAS_ADDRESS && SALON.mapsUrl ? (
+              <a
+                href={SALON.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-gold px-6 py-3 text-gold transition hover:bg-gold hover:text-noir"
+              >
+                <MapPin className="h-5 w-5" />
+                Get Directions
+              </a>
+            ) : (
+              <PlaceholderNote label="Google Maps directions" />
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="grid gap-10 lg:grid-cols-2">
           <div>
             <div className="overflow-hidden rounded-2xl shadow-elegant">
               <img
@@ -182,7 +227,10 @@ function ContactPage() {
                 loading="lazy"
               />
             </div>
-            <div className="mt-6 rounded-2xl bg-noir p-8 text-center text-noir-foreground">
+          </div>
+
+          <div className="flex flex-col justify-center">
+            <div className="rounded-2xl bg-noir p-8 text-center text-noir-foreground">
               <CalendarCheck className="mx-auto h-8 w-8 text-gold" />
               <h2 className="mt-3 font-display text-2xl font-bold">
                 Ready when you are
@@ -191,7 +239,7 @@ function ContactPage() {
                 Book ahead to skip the wait — especially on weekends and during
                 wedding season.
               </p>
-              <div className="mt-6">
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
                 <BookAppointmentCta />
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, MessageCircle, MapPin, Clock } from "lucide-react";
-import { SALON, HAS_PHONE, HAS_WHATSAPP, HAS_ADDRESS, whatsappLink } from "@/lib/salon";
+import { SALON, HAS_PHONE, HAS_WHATSAPP, HAS_ADDRESS, whatsappLink, displayPhone } from "@/lib/salon";
 
 export function SiteFooter() {
   return (
@@ -70,7 +70,7 @@ export function SiteFooter() {
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
               {HAS_PHONE ? (
                 <a href={`tel:${SALON.phone}`} className="hover:text-noir-foreground">
-                  {SALON.phone}
+                  {displayPhone(SALON.phone)}
                 </a>
               ) : (
                 <span className="italic">Phone — to be added</span>

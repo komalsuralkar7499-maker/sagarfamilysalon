@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, MessageCircle, MapPin, Clock } from "lucide-react";
-import { SALON, HAS_PHONE, HAS_WHATSAPP, HAS_ADDRESS, whatsappLink } from "@/lib/salon";
+import { SALON, HAS_PHONE, HAS_WHATSAPP, HAS_ADDRESS, whatsappLink, displayPhone } from "@/lib/salon";
 
 export function SiteFooter() {
   return (

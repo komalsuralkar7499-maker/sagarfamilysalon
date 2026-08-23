@@ -70,7 +70,7 @@ export function SiteFooter() {
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
               {HAS_PHONE ? (
                 <a href={`tel:${SALON.phone}`} className="hover:text-noir-foreground">
-                  {SALON.phone}
+                  {displayPhone(SALON.phone)}
                 </a>
               ) : (
                 <span className="italic">Phone — to be added</span>

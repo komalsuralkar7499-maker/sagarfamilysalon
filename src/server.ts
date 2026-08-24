@@ -52,8 +52,8 @@ function isH3SwallowedErrorBody(body: string): boolean {
 //   - fonts.gstatic.com     — Google Fonts font files
 //   - wa.me                 — WhatsApp chat links (navigation only, not a
 //                             loaded resource, so no CSP directive needed)
-// Images are served same-origin via the Lovable asset CDN proxy
-// (/__l5e/assets-v1/...), so no external img-src entries are required.
+// Images are served same-origin from public/images/, so no external
+// img-src entries are required.
 // ---------------------------------------------------------------------------
 
 const CONTENT_SECURITY_POLICY = [

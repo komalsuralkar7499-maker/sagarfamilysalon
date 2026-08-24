@@ -18,6 +18,7 @@ import {
 const EMPTY: BookingRequest = {
   name: "",
   phone: "",
+  email: "",
   service: "",
   date: "",
   notes: "",
@@ -62,9 +63,11 @@ export function BookingForm() {
 
     setSending(true);
     let emailed = false;
+    let confirmed = false;
     try {
       const result = await submitBooking({ data: parsed.data });
       emailed = result.emailed;
+      confirmed = result.confirmationEmailed;
     } catch {
       emailed = false;
     }
@@ -77,13 +80,20 @@ export function BookingForm() {
     setValues(EMPTY);
     setErrors({});
 
+    const confirmNote = confirmed
+      ? " A confirmation email is on its way to your inbox."
+      : "";
+
     if (emailed && HAS_WHATSAPP) {
       toast.success("Request sent!", {
-        description: "We've emailed the salon and opened WhatsApp with your details — just press send.",
+        description:
+          "We've emailed the salon and opened WhatsApp with your details — just press send." +
+          confirmNote,
       });
     } else if (emailed) {
       toast.success("Request sent!", {
-        description: "The salon has received your booking request by email.",
+        description:
+          "The salon has received your booking request by email." + confirmNote,
       });
     } else if (HAS_WHATSAPP) {
       toast.success("Opening WhatsApp…", {
@@ -126,6 +136,26 @@ export function BookingForm() {
           />
           {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="booking-email">Email address *</Label>
+        <Input
+          id="booking-email"
+          type="email"
+          value={values.email}
+          onChange={(e) => set("email", e.target.value)}
+          placeholder="you@example.com"
+          maxLength={254}
+          autoComplete="email"
+          aria-invalid={!!errors.email}
+        />
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email}</p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          We'll send your appointment confirmation to this address.
+        </p>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -187,9 +217,9 @@ export function BookingForm() {
         {sending ? "Sending…" : "Request appointment"}
       </button>
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Submitting sends your request to the salon by email
-        {HAS_WHATSAPP ? " and opens WhatsApp with a prefilled message" : ""}. No
-        payment is taken online.
+        Submitting emails your request to the salon and sends a confirmation
+        to your inbox{HAS_WHATSAPP ? ", and opens WhatsApp with a prefilled message" : ""}.
+        No payment is taken online.
       </p>
     </form>
   );

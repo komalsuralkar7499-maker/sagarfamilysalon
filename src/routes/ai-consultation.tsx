@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   MessageCircle,
+  RotateCcw,
   Sparkles,
 } from "lucide-react";
 import { SALON, whatsappLink } from "@/lib/salon";
@@ -21,29 +22,24 @@ type Option = {
   price: number;
 };
 
-const categories: {
-  value: Category;
-  title: string;
-  description: string;
-  emoji: string;
-}[] = [
+const categories = [
   {
-    value: "hair",
-    title: "Hair Consultation",
-    description: "Find the right haircut, colour or treatment.",
+    value: "hair" as Category,
     emoji: "💇",
+    title: "Hair Consultation",
+    description: "Find the right haircut, colour, spa or styling service.",
   },
   {
-    value: "skin",
-    title: "Skin Consultation",
-    description: "Choose a treatment based on your skin concern.",
+    value: "skin" as Category,
     emoji: "✨",
+    title: "Skin Consultation",
+    description: "Choose a facial or skin-care service for your goal.",
   },
   {
-    value: "makeup",
-    title: "Makeup Consultation",
-    description: "Find your perfect makeup look.",
+    value: "makeup" as Category,
     emoji: "💄",
+    title: "Makeup Consultation",
+    description: "Find a makeup look for your special occasion.",
   },
 ];
 
@@ -53,7 +49,7 @@ const questions: Record<
 > = {
   hair: [
     {
-      question: "What are you looking for?",
+      question: "What do you want today?",
       options: [
         { label: "Haircut", value: "haircut", price: 599 },
         { label: "Hair Colour", value: "colour", price: 1499 },
@@ -65,14 +61,14 @@ const questions: Record<
       question: "What is your hair length?",
       options: [
         { label: "Short", value: "short", price: 0 },
-        { label: "Medium", value: "medium", price: 300 },
-        { label: "Long", value: "long", price: 600 },
+        { label: "Medium", value: "medium", price: 200 },
+        { label: "Long", value: "long", price: 400 },
       ],
     },
     {
-      question: "What result do you want?",
+      question: "What result do you prefer?",
       options: [
-        { label: "Fresh & Natural", value: "natural", price: 0 },
+        { label: "Natural & Simple", value: "natural", price: 0 },
         { label: "Premium Look", value: "premium", price: 300 },
         { label: "Complete Transformation", value: "transform", price: 600 },
       ],
@@ -81,16 +77,16 @@ const questions: Record<
 
   skin: [
     {
-      question: "What is your main skin concern?",
+      question: "What is your main skin goal?",
       options: [
-        { label: "Dullness / Glow", value: "glow", price: 899 },
-        { label: "Tanning", value: "tan", price: 699 },
+        { label: "Glow & Freshness", value: "glow", price: 899 },
+        { label: "De-tan", value: "tan", price: 699 },
         { label: "Deep Cleansing", value: "clean", price: 499 },
-        { label: "Hydration", value: "hydration", price: 1499 },
+        { label: "Hydration", value: "hydra", price: 1499 },
       ],
     },
     {
-      question: "How would you describe your skin?",
+      question: "How does your skin usually feel?",
       options: [
         { label: "Normal", value: "normal", price: 0 },
         { label: "Dry", value: "dry", price: 100 },
@@ -99,11 +95,11 @@ const questions: Record<
       ],
     },
     {
-      question: "What result do you want?",
+      question: "What finish do you want?",
       options: [
-        { label: "Fresh Skin", value: "fresh", price: 0 },
-        { label: "Brighter Glow", value: "bright", price: 200 },
-        { label: "Deep Treatment", value: "deep", price: 400 },
+        { label: "Fresh", value: "fresh", price: 0 },
+        { label: "Bright & Glowing", value: "bright", price: 200 },
+        { label: "Premium Treatment", value: "premium", price: 400 },
       ],
     },
   ],
@@ -115,11 +111,11 @@ const questions: Record<
         { label: "Party", value: "party", price: 1499 },
         { label: "Engagement", value: "engagement", price: 2499 },
         { label: "Bridal", value: "bridal", price: 5999 },
-        { label: "Just Glam", value: "glam", price: 1799 },
+        { label: "Special Event", value: "event", price: 1799 },
       ],
     },
     {
-      question: "What style do you prefer?",
+      question: "Which style do you prefer?",
       options: [
         { label: "Natural", value: "natural", price: 0 },
         { label: "Elegant", value: "elegant", price: 300 },
@@ -127,11 +123,11 @@ const questions: Record<
       ],
     },
     {
-      question: "Would you like hair styling?",
+      question: "Do you need hairstyling?",
       options: [
-        { label: "No", value: "no-hair", price: 0 },
+        { label: "No", value: "no", price: 0 },
         { label: "Yes", value: "hair", price: 1499 },
-        { label: "Yes + Saree Draping", value: "complete", price: 1998 },
+        { label: "Yes + Saree Draping", value: "complete", price: 1999 },
       ],
     },
   ],
@@ -153,51 +149,53 @@ function AIBeautyConsultation() {
   const recommendation = useMemo(() => {
     if (!category) return "";
 
+    const first = answers[0]?.value;
+
     if (category === "hair") {
-      const first = answers[0]?.value;
-
       if (first === "colour")
-        return "Our AI recommends a professional Hair Colour consultation with a personalised colour selection.";
-
+        return "Based on your answers, we recommend a personalised Hair Colour consultation.";
       if (first === "spa")
-        return "Our AI recommends a Hair Spa & Treatment for healthier, softer-looking hair.";
-
-      return "Our AI recommends a personalised Haircut & Styling session based on your preferences.";
+        return "A Hair Spa & Treatment is a great match for your selected hair goal.";
+      if (first === "styling")
+        return "Our stylists can create an occasion-ready look based on your hair length and preference.";
+      return "A personalised Haircut & Styling session is recommended for you.";
     }
 
     if (category === "skin") {
-      const first = answers[0]?.value;
-
-      if (first === "hydration")
-        return "Our AI recommends a Hydra Facial for hydration and a refreshed appearance.";
-
+      if (first === "hydra")
+        return "A Hydra Beauty / Hydra Facial consultation may suit your hydration goal.";
       if (first === "tan")
-        return "Our AI recommends a De-tan treatment based on your selected concern.";
-
-      return "Our AI recommends a personalised facial/cleanup based on your skin goals.";
+        return "A De-tan consultation is recommended for your selected concern.";
+      if (first === "clean")
+        return "A professional Cleanup / Facial consultation may suit your goal.";
+      return "A personalised facial consultation is recommended based on your selected preferences.";
     }
 
-    const occasion = answers[0]?.value;
+    if (first === "bridal")
+      return "We recommend a Bridal Makeup consultation so your makeup, hairstyle and overall look can be planned together.";
 
-    if (occasion === "bridal")
-      return "Our AI recommends a complete Bridal Makeup consultation so your makeup, hairstyle and overall look can be planned together.";
-
-    return "Our AI recommends a makeup look customised to your occasion, preferred style and hairstyle.";
+    return "A personalised Makeup consultation is recommended for your occasion and preferred style.";
   }, [category, answers]);
 
-  function chooseCategory(value: Category) {
+  const selectedCategory = categories.find(
+    (item) => item.value === category,
+  );
+
+  function startCategory(value: Category) {
     setCategory(value);
     setStep(0);
     setAnswers([]);
   }
 
-  function chooseOption(option: Option) {
+  function selectOption(option: Option) {
     const updated = [...answers];
     updated[step] = option;
     setAnswers(updated);
 
     if (step < currentQuestions.length - 1) {
       setStep(step + 1);
+    } else {
+      setStep(currentQuestions.length);
     }
   }
 
@@ -208,15 +206,18 @@ function AIBeautyConsultation() {
   }
 
   const whatsappMessage = [
-    "Hello Sagar Family Salon! 👋",
+    `Hello ${SALON.name}! 👋`,
     "",
-    "I used the AI Beauty Consultation.",
-    `Category: ${category ?? ""}`,
-    ...answers.map((answer, index) => `Q${index + 1}: ${answer.label}`),
+    "I completed the AI Beauty Consultation.",
+    `Category: ${selectedCategory?.title ?? ""}`,
+    "",
+    ...answers.map(
+      (answer, index) => `${index + 1}. ${answer.label}`,
+    ),
     "",
     `Estimated Price: ₹${total.toLocaleString("en-IN")}`,
     "",
-    "I would like to book a consultation.",
+    "I would like to book this service.",
   ].join("\n");
 
   return (
@@ -232,68 +233,87 @@ function AIBeautyConsultation() {
           </p>
 
           <h1 className="mt-3 font-display text-4xl font-bold sm:text-5xl">
-            Find the right <span className="text-gold-gradient">beauty service</span>
+            Find Your Perfect{" "}
+            <span className="text-gold-gradient">Beauty Service</span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl leading-relaxed text-noir-muted">
-            Answer a few simple questions and get a personalised recommendation
-            with an estimated price.
+            Answer a few simple questions and get a personalised service
+            recommendation with an estimated price.
           </p>
         </div>
 
-        <div className="mx-auto mt-12 max-w-3xl rounded-3xl bg-card p-6 shadow-elegant sm:p-10">
+        <div className="mx-auto mt-12 max-w-4xl rounded-3xl bg-card p-6 shadow-elegant sm:p-10">
           {!category && (
             <>
-              <h2 className="text-center font-display text-2xl font-bold">
-                What would you like help with?
-              </h2>
+              <div className="text-center">
+                <h2 className="font-display text-2xl font-bold">
+                  What would you like help with?
+                </h2>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Select one to start your consultation.
+                </p>
+              </div>
+
+              <div className="mt-8 grid gap-5 md:grid-cols-3">
                 {categories.map((item) => (
                   <button
                     key={item.value}
                     type="button"
-                    onClick={() => chooseCategory(item.value)}
-                    className="group rounded-2xl border border-border p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-gold"
+                    onClick={() => startCategory(item.value)}
+                    className="group rounded-2xl border border-border bg-background p-6 text-left transition-all duration-300 hover:-translate-y-2 hover:border-primary hover:shadow-gold"
                   >
                     <span className="text-4xl">{item.emoji}</span>
-                    <h3 className="mt-4 font-display text-xl font-semibold">
+
+                    <h3 className="mt-5 font-display text-xl font-semibold">
                       {item.title}
                     </h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
+
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                       {item.description}
                     </p>
-                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                      Start <ArrowRight className="h-4 w-4" />
+
+                    <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                      Start Consultation
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   </button>
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={() => chooseCategory("hair")}
-                className="mt-6 w-full rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center text-sm font-semibold text-primary transition hover:bg-primary/10"
-              >
-                🤷 Not Sure What to Book? — Let us help you
-              </button>
+              <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center">
+                <p className="font-semibold">🤷 Not sure what to book?</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Start with Hair Consultation and we'll guide you through the
+                  options.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => startCategory("hair")}
+                  className="mt-4 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:scale-105"
+                >
+                  Help Me Choose
+                </button>
+              </div>
             </>
           )}
 
-          {category && step < currentQuestions.length && (
+          {category && step < currentQuestions.length && currentQuestion && (
             <>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={reset}
-                  className="inline-flex items-center gap-2 hover:text-foreground"
+                  className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Start over
+                  Start Over
                 </button>
 
-                <span>
-                  Step {step + 1} of {currentQuestions.length}
+                <span className="text-sm text-muted-foreground">
+                  Step {step + 1} / {currentQuestions.length}
                 </span>
               </div>
 
@@ -306,35 +326,44 @@ function AIBeautyConsultation() {
                 />
               </div>
 
-              <h2 className="mt-10 font-display text-2xl font-bold sm:text-3xl">
-                {currentQuestion.question}
-              </h2>
+              <div className="mt-10">
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">
+                  {selectedCategory?.emoji} {selectedCategory?.title}
+                </p>
 
-              <div className="mt-7 grid gap-3">
-                {currentQuestion.options.map((option) => {
-                  const selected = answers[step]?.value === option.value;
+                <h2 className="mt-3 font-display text-2xl font-bold sm:text-3xl">
+                  {currentQuestion.question}
+                </h2>
 
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => chooseOption(option)}
-                      className={`flex items-center justify-between rounded-2xl border p-5 text-left transition-all duration-300 hover:-translate-y-0.5 ${
-                        selected
-                          ? "border-primary bg-primary/10 shadow-gold"
-                          : "border-border bg-background hover:border-primary/60"
-                      }`}
-                    >
-                      <span className="font-medium">{option.label}</span>
+                <div className="mt-7 grid gap-3">
+                  {currentQuestion.options.map((option) => {
+                    const selected =
+                      answers[step]?.value === option.value;
 
-                      {selected ? (
-                        <Check className="h-5 w-5 text-primary" />
-                      ) : (
-                        <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => selectOption(option)}
+                        className={`flex items-center justify-between rounded-2xl border p-5 text-left transition-all duration-300 ${
+                          selected
+                            ? "border-primary bg-primary/10 shadow-gold"
+                            : "border-border bg-background hover:-translate-y-0.5 hover:border-primary/60"
+                        }`}
+                      >
+                        <span className="font-medium">
+                          {option.label}
+                        </span>
+
+                        {selected ? (
+                          <Check className="h-5 w-5 text-primary" />
+                        ) : (
+                          <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </>
           )}
@@ -346,20 +375,20 @@ function AIBeautyConsultation() {
               </div>
 
               <p className="mt-6 text-sm font-medium uppercase tracking-[0.25em] text-primary">
-                Your personalised recommendation
+                Consultation Complete
               </p>
 
-              <h2 className="mt-3 font-display text-3xl font-bold">
+              <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">
                 Your Beauty Plan
               </h2>
 
-              <p className="mx-auto mt-4 max-w-xl leading-relaxed text-muted-foreground">
+              <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-muted-foreground">
                 {recommendation}
               </p>
 
               <div className="mx-auto mt-8 max-w-md rounded-2xl border border-primary/30 bg-primary/5 p-6">
                 <p className="text-sm text-muted-foreground">
-                  Estimated starting price
+                  Estimated Price
                 </p>
 
                 <p className="mt-2 text-4xl font-bold text-primary">
@@ -367,7 +396,8 @@ function AIBeautyConsultation() {
                 </p>
 
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Final price may vary after an in-person consultation.
+                  Final price may vary after consultation and service
+                  assessment.
                 </p>
               </div>
 
@@ -376,17 +406,25 @@ function AIBeautyConsultation() {
                   href={whatsappLink(whatsappMessage)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-3 font-semibold text-primary-foreground shadow-gold transition-transform hover:scale-[1.03]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-3 font-semibold text-primary-foreground shadow-gold transition hover:scale-[1.03]"
                 >
                   <MessageCircle className="h-5 w-5" />
                   Book on WhatsApp
                 </a>
 
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-7 py-3 font-semibold transition hover:bg-muted"
+                >
+                  Book Appointment
+                </Link>
+
                 <button
                   type="button"
                   onClick={reset}
-                  className="rounded-full border border-border px-7 py-3 font-semibold transition hover:bg-muted"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-7 py-3 font-semibold transition hover:bg-muted"
                 >
+                  <RotateCcw className="h-4 w-4" />
                   Start Again
                 </button>
               </div>
@@ -395,7 +433,7 @@ function AIBeautyConsultation() {
         </div>
 
         <p className="mt-8 text-center text-xs text-noir-muted">
-          {SALON.name} • AI-assisted recommendations • Prices are estimates
+          AI-assisted recommendations • Prices shown are estimates
         </p>
       </section>
     </main>

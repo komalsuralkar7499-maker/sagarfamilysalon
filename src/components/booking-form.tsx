@@ -106,15 +106,17 @@ function buildWhatsAppMessage(
     "I would like to book an appointment.",
     "",
     "👤 Customer Details",
-    `Name: ${booking.name}`,
-    `Phone: ${booking.phone}`,
-    `Email: ${booking.email}`,
+    `Name: ${booking.name.trim()}`,
+    `Phone: ${booking.phone.trim()}`,
+    `Email: ${booking.email.trim()}`,
     "",
     "💇 Appointment Details",
-    `Service: ${booking.service}`,
+    `Service: ${booking.service.trim()}`,
     `Preferred date: ${formatDate(booking.date)}`,
-    `Preferred time: ${booking.time}`,
-    `Preferred specialist: ${booking.stylist}`,
+    `Preferred time: ${booking.time || "Not specified"}`,
+    `Preferred specialist: ${
+      booking.stylist || "Any Specialist"
+    }`,
     `Occasion / requirement: ${
       booking.occasion || "Not specified"
     }`,
@@ -168,13 +170,7 @@ export function BookingForm() {
   ) {
     event.preventDefault();
 
-    /*
-     * IMPORTANT:
-     * We intentionally do NOT use native `required`
-     * validation. Radix Select can create hidden inputs
-     * that sometimes trigger "Required" even when the
-     * visible option is selected.
-     */
+    if (sending) return;
 
     const baseData: BookingRequest = {
       name: values.name.trim(),
@@ -201,43 +197,53 @@ export function BookingForm() {
       }
     }
 
+    // TIME IS REQUIRED
     if (!values.time) {
       nextErrors.time =
         "Please choose a preferred time";
     }
 
-    if (!values.stylist) {
-      nextErrors.stylist =
-        "Please choose a preferred specialist";
-    }
+    /*
+     * SPECIALIST IS OPTIONAL.
+     * Do NOT add validation here.
+     */
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
 
       toast.error("Please complete the required fields.", {
         description:
-          "Choose a service, date, time and specialist.",
+          "Name, phone, email, service, date and preferred time are required.",
       });
 
       return;
     }
 
     /*
-     * WhatsApp is opened BEFORE the async server request.
-     * This prevents mobile browsers from blocking the popup.
+     * Build WhatsApp message using the complete
+     * information entered by the customer.
+     */
+    const message =
+      buildWhatsAppMessage(values);
+
+    /*
+     * Open WhatsApp immediately after the user click.
+     * This helps prevent mobile browsers from blocking
+     * the new tab/window as a popup.
      */
     if (HAS_WHATSAPP) {
-      const message =
-        buildWhatsAppMessage(values);
-
-      const whatsappUrl =
-        whatsappLink(message);
-
-      window.open(
-        whatsappUrl,
-        "_blank",
-        "noopener,noreferrer",
-      );
+      try {
+        window.open(
+          whatsappLink(message),
+          "_blank",
+          "noopener,noreferrer",
+        );
+      } catch (error) {
+        console.error(
+          "WhatsApp could not be opened:",
+          error,
+        );
+      }
     }
 
     setSending(true);
@@ -246,6 +252,10 @@ export function BookingForm() {
     let confirmationEmailed = false;
 
     try {
+      /*
+       * Only validated bookingSchema data is sent to
+       * the server. No secret/API key is exposed here.
+       */
       const result = await submitBooking({
         data: parsed.data,
       });
@@ -258,15 +268,15 @@ export function BookingForm() {
         "Booking submission failed:",
         error,
       );
+    } finally {
+      setSending(false);
     }
-
-    setSending(false);
 
     if (emailed) {
       toast.success("Appointment request sent!", {
         description:
           HAS_WHATSAPP
-            ? "WhatsApp has your complete booking details. Just press Send."
+            ? "Your complete booking details are ready in WhatsApp. Just press Send."
             : confirmationEmailed
               ? "The salon has received your request."
               : "Your request has been submitted.",
@@ -459,7 +469,7 @@ export function BookingForm() {
 
       {/* TIME + SPECIALIST */}
       <div className="grid gap-5 sm:grid-cols-2">
-        {/* TIME */}
+        {/* TIME - REQUIRED */}
         <div className="space-y-2">
           <Label htmlFor="booking-time">
             Preferred time *
@@ -499,10 +509,10 @@ export function BookingForm() {
           )}
         </div>
 
-        {/* SPECIALIST */}
+        {/* SPECIALIST - OPTIONAL */}
         <div className="space-y-2">
           <Label htmlFor="booking-stylist">
-            Preferred specialist *
+            Preferred specialist
           </Label>
 
           <Select
@@ -517,7 +527,7 @@ export function BookingForm() {
                 errors.stylist,
               )}
             >
-              <SelectValue placeholder="Choose a specialist" />
+              <SelectValue placeholder="Any specialist" />
             </SelectTrigger>
 
             <SelectContent>
@@ -539,6 +549,10 @@ export function BookingForm() {
               {errors.stylist}
             </p>
           )}
+
+          <p className="text-xs text-muted-foreground">
+            Optional — leave as Any specialist if you don't have a preference.
+          </p>
         </div>
       </div>
 
@@ -554,9 +568,7 @@ export function BookingForm() {
             setField("occasion", value)
           }
         >
-          <SelectTrigger
-            id="booking-occasion"
-          >
+          <SelectTrigger id="booking-occasion">
             <SelectValue placeholder="Select if applicable" />
           </SelectTrigger>
 

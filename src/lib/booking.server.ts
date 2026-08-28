@@ -5,7 +5,8 @@ function escapeHtml(value: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 type ResendConfig = {
@@ -16,7 +17,9 @@ type ResendConfig = {
 function resendConfig(): ResendConfig | null {
   const apiKey = process.env["RESEND_API_KEY"];
 
-  if (!apiKey) return null;
+  if (!apiKey) {
+    return null;
+  }
 
   const from =
     process.env["RESEND_FROM_EMAIL"] ||
@@ -33,182 +36,232 @@ async function sendEmail(
   payload: Record<string, unknown>,
 ): Promise<boolean> {
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "https://api.resend.com/emails",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    });
+    );
 
-    if (!res.ok) {
+    if (!response.ok) {
       console.error(
-        `Resend error [${res.status}]: ${await res.text()}`,
+        `Resend error [${response.status}]: ${await response.text()}`,
       );
+
       return false;
     }
 
     return true;
-  } catch (err) {
-    console.error("Resend request failed:", err);
+  } catch (error) {
+    console.error(
+      "Resend request failed:",
+      error,
+    );
+
     return false;
   }
 }
 
+/*
+ * Extra fields are intentionally read from the validated
+ * booking object when available. This keeps compatibility
+ * with the existing BookingRequest type.
+ */
+function getExtraBookingFields(
+  booking: BookingRequest,
+): {
+  time: string;
+  stylist: string;
+  occasion: string;
+} {
+  const extra =
+    booking as BookingRequest & {
+      time?: unknown;
+      stylist?: unknown;
+      occasion?: unknown;
+    };
+
+  return {
+    time:
+      typeof extra.time === "string"
+        ? extra.time.trim()
+        : "Not specified",
+
+    stylist:
+      typeof extra.stylist === "string"
+        ? extra.stylist.trim()
+        : "Any specialist",
+
+    occasion:
+      typeof extra.occasion === "string"
+        ? extra.occasion.trim()
+        : "Not specified",
+  };
+}
+
+/**
+ * Sends the booking notification to the salon.
+ */
 export async function sendBookingEmail(
   booking: BookingRequest,
 ): Promise<boolean> {
-  const cfg = resendConfig();
-  const to = process.env["SALON_BOOKING_EMAIL"];
+  const config = resendConfig();
+  const salonEmail =
+    process.env["SALON_BOOKING_EMAIL"];
 
-  if (!cfg || !to) return false;
+  if (!config || !salonEmail) {
+    return false;
+  }
+
+  const extra =
+    getExtraBookingFields(booking);
 
   const rows: Array<[string, string]> = [
-    ["Customer Name", booking.name],
-    ["Phone Number", booking.phone],
-    ["Email Address", booking.email],
+    ["Name", booking.name],
+    ["Phone", booking.phone],
+    ["Email", booking.email],
     ["Service", booking.service],
-    ["Preferred Date", booking.date || "Not specified"],
-    ["Preferred Time", booking.time || "Not specified"],
-    ["Preferred Stylist", booking.stylist || "Any stylist"],
-    ["Occasion / Requirement", booking.occasion || "Not specified"],
-    ["Additional Notes", booking.notes?.trim() || "—"],
+    [
+      "Preferred date",
+      booking.date || "Not specified",
+    ],
+    ["Preferred time", extra.time],
+    ["Preferred specialist", extra.stylist],
+    ["Occasion / requirement", extra.occasion],
+    [
+      "Additional notes",
+      booking.notes?.trim() || "—",
+    ],
   ];
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:650px;margin:0 auto">
-      <div style="background:#111;color:white;padding:24px;border-radius:12px 12px 0 0">
-        <h2 style="margin:0;color:#d4af37">
-          New Appointment Request
-        </h2>
-        <p style="margin:8px 0 0;color:#ddd">
-          Sagar Family Salon
-        </p>
-      </div>
+      <h2 style="color:#b8860b">
+        New Appointment Request — Sagar Family Salon
+      </h2>
 
-      <div style="padding:20px;background:#fafafa">
-        <table
-          cellpadding="10"
-          cellspacing="0"
-          width="100%"
-          style="border-collapse:collapse;background:white"
-        >
-          ${rows
-            .map(
-              ([label, value]) => `
-                <tr>
-                  <td
-                    style="
-                      border:1px solid #ddd;
-                      font-weight:bold;
-                      width:35%;
-                    "
-                  >
-                    ${escapeHtml(label)}
-                  </td>
+      <p>
+        A new customer has requested an appointment.
+      </p>
 
-                  <td style="border:1px solid #ddd">
-                    ${escapeHtml(value)}
-                  </td>
-                </tr>
-              `,
-            )
-            .join("")}
-        </table>
+      <table
+        cellpadding="9"
+        cellspacing="0"
+        style="border-collapse:collapse;width:100%"
+      >
+        ${rows
+          .map(
+            ([label, value]) => `
+              <tr>
+                <td
+                  style="
+                    border:1px solid #ddd;
+                    font-weight:bold;
+                    width:35%;
+                  "
+                >
+                  ${escapeHtml(label)}
+                </td>
 
-        <div
-          style="
-            margin-top:20px;
-            padding:16px;
-            background:#fff8df;
-            border:1px solid #ead48b;
-            border-radius:8px;
-          "
-        >
-          <strong>Action Required</strong>
+                <td
+                  style="
+                    border:1px solid #ddd;
+                  "
+                >
+                  ${escapeHtml(value)}
+                </td>
+              </tr>
+            `,
+          )
+          .join("")}
+      </table>
 
-          <p style="margin:8px 0 0">
-            Please check the salon schedule and confirm whether
-            the requested date and time are available.
-          </p>
-
-          <p style="margin:8px 0 0">
-            You can reply directly to this email or contact the
-            customer by phone/WhatsApp.
-          </p>
-        </div>
-      </div>
+      <p style="margin-top:20px">
+        Please contact the customer by phone or WhatsApp
+        to confirm the availability of the requested slot.
+      </p>
     </div>
   `;
 
   const text = [
     "NEW APPOINTMENT REQUEST — SAGAR FAMILY SALON",
     "",
-    ...rows.map(([label, value]) => `${label}: ${value}`),
+    ...rows.map(
+      ([label, value]) =>
+        `${label}: ${value}`,
+    ),
     "",
-    "ACTION REQUIRED:",
-    "Please check the salon schedule and confirm whether the requested date and time are available.",
+    "Please confirm the requested date and time with the customer.",
   ].join("\n");
 
-  return sendEmail(cfg.apiKey, {
-    from: cfg.from,
-    to: [to],
+  return sendEmail(config.apiKey, {
+    from: config.from,
+    to: [salonEmail],
     reply_to: booking.email,
-    subject: `New Appointment — ${booking.name} — ${booking.date} ${booking.time || ""}`,
+    subject: `Appointment Request — ${booking.name} — ${booking.service}`,
     html,
     text,
   });
 }
 
+/**
+ * Sends confirmation email to the customer.
+ */
 export async function sendConfirmationEmail(
   booking: BookingRequest,
 ): Promise<boolean> {
-  const cfg = resendConfig();
+  const config = resendConfig();
 
-  if (!cfg) return false;
+  if (!config) {
+    return false;
+  }
+
+  const extra =
+    getExtraBookingFields(booking);
 
   const rows: Array<[string, string]> = [
     ["Service", booking.service],
-    ["Preferred date", booking.date || "Not specified"],
-    ["Preferred time", booking.time || "Not specified"],
-    ["Preferred stylist", booking.stylist || "Any stylist"],
-    ["Occasion / Requirement", booking.occasion || "Not specified"],
+    [
+      "Preferred date",
+      booking.date || "Not specified",
+    ],
+    ["Preferred time", extra.time],
+    ["Preferred specialist", extra.stylist],
+    ["Occasion / requirement", extra.occasion],
   ];
 
-  if (booking.notes?.trim()) {
-    rows.push(["Additional Notes", booking.notes.trim()]);
-  }
-
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-
+    <div
+      style="
+        font-family:Arial,sans-serif;
+        max-width:560px;
+        margin:0 auto;
+        line-height:1.6;
+      "
+    >
       <h2 style="color:#b8860b">
         Sagar Family Salon
       </h2>
-
-      <h3>
-        Appointment Request Received
-      </h3>
 
       <p>
         Hi ${escapeHtml(booking.name)},
       </p>
 
       <p>
-        Thank you for choosing Sagar Family Salon.
-        We've received your appointment request.
-      </p>
-
-      <p>
-        Our team will check the requested slot and
-        confirm your appointment shortly by phone or WhatsApp.
+        Thank you for your appointment request!
+        We've received your details and will confirm
+        your requested slot shortly by phone or WhatsApp.
       </p>
 
       <table
-        cellpadding="8"
+        cellpadding="9"
         cellspacing="0"
-        style="border-collapse:collapse;margin:18px 0;width:100%"
+        style="border-collapse:collapse;width:100%;margin:18px 0"
       >
         ${rows
           .map(
@@ -223,7 +276,11 @@ export async function sendConfirmationEmail(
                   ${escapeHtml(label)}
                 </td>
 
-                <td style="border:1px solid #ddd">
+                <td
+                  style="
+                    border:1px solid #ddd;
+                  "
+                >
                   ${escapeHtml(value)}
                 </td>
               </tr>
@@ -233,36 +290,48 @@ export async function sendConfirmationEmail(
       </table>
 
       <p>
-        If you need to change anything, please contact us.
+        <strong>
+          Important:
+        </strong>
+        Your appointment is not confirmed until
+        the salon confirms the availability.
       </p>
 
       <p>
-        <strong>Phone / WhatsApp:</strong>
-        +91 78419 50095
+        If anything changes, please call or WhatsApp us
+        on <strong>+91 78419 50095</strong>.
       </p>
 
-      <p style="color:#666;font-size:13px">
+      <p
+        style="
+          color:#666;
+          font-size:13px;
+          margin-top:24px;
+        "
+      >
         Sagar Family Salon<br />
         Hakimi Hospital Building,<br />
         Hanuman Chowk, Near Maharashtra Bank,<br />
-        Malkapur, Maharashtra – 443101<br />
+        Malkapur, Maharashtra – 443101<br /><br />
         Open Monday – Sunday, 10:00 AM – 8:00 PM
       </p>
-
     </div>
   `;
 
   const text = [
     `Hi ${booking.name},`,
     "",
-    "Thank you for choosing Sagar Family Salon.",
-    "We've received your appointment request.",
+    "Thank you for your appointment request!",
+    "We've received your details and will confirm your requested slot shortly by phone or WhatsApp.",
     "",
-    "Our team will check the requested slot and confirm your appointment shortly.",
+    ...rows.map(
+      ([label, value]) =>
+        `${label}: ${value}`,
+    ),
     "",
-    ...rows.map(([label, value]) => `${label}: ${value}`),
+    "Important: Your appointment is not confirmed until the salon confirms the availability.",
     "",
-    "Phone / WhatsApp: +91 78419 50095",
+    "If anything changes, please call or WhatsApp us on +91 78419 50095.",
     "",
     "Sagar Family Salon",
     "Hakimi Hospital Building, Hanuman Chowk, Near Maharashtra Bank,",
@@ -270,8 +339,8 @@ export async function sendConfirmationEmail(
     "Open Monday – Sunday, 10:00 AM – 8:00 PM",
   ].join("\n");
 
-  return sendEmail(cfg.apiKey, {
-    from: cfg.from,
+  return sendEmail(config.apiKey, {
+    from: config.from,
     to: [booking.email],
     subject:
       "Appointment Request Received — Sagar Family Salon",

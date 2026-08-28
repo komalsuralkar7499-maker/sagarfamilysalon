@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { CalendarCheck, Loader2, MessageCircle } from "lucide-react";
+import {
+  CalendarCheck,
+  Loader2,
+  MessageCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -33,7 +37,8 @@ type ExtraBookingDetails = {
   occasion: string;
 };
 
-type BookingFormValues = BookingRequest & ExtraBookingDetails;
+type BookingFormValues =
+  BookingRequest & ExtraBookingDetails;
 
 type FieldErrors = Partial<
   Record<keyof BookingFormValues, string>
@@ -74,38 +79,32 @@ const TIME_OPTIONS = [
   "7:30 PM",
 ];
 
-const HAIR_SERVICES = [
-  "Haircut",
-  "Haircut & Styling",
-  "Hair Styling",
-  "Hair Colour",
-  "Hair Treatment",
-  "Hair Spa",
-  "Hair Straightening",
-  "Hair Smoothening",
-  "Keratin Treatment",
+const HAIR_KEYWORDS = [
+  "hair",
+  "haircut",
+  "styling",
+  "keratin",
+  "straightening",
+  "smoothening",
 ];
 
-const BEAUTY_SERVICES = [
-  "Facial",
-  "Facial & Cleanup",
-  "Cleanup",
-  "Bleach",
-  "D-Tan",
-  "Skin Treatment",
-  "Makeup",
-  "Bridal Makeup",
+const BEAUTY_KEYWORDS = [
+  "facial",
+  "cleanup",
+  "skin",
+  "bleach",
+  "d-tan",
+  "makeup",
+  "bridal",
 ];
 
 function getStylists(service: string): string[] {
-  const normalized = service.toLowerCase();
+  const value = service.toLowerCase();
 
   if (
-    normalized.includes("hair") ||
-    normalized.includes("haircut") ||
-    normalized.includes("keratin") ||
-    normalized.includes("straightening") ||
-    normalized.includes("smoothening")
+    HAIR_KEYWORDS.some((keyword) =>
+      value.includes(keyword),
+    )
   ) {
     return [
       "Hair Specialist",
@@ -115,13 +114,9 @@ function getStylists(service: string): string[] {
   }
 
   if (
-    normalized.includes("facial") ||
-    normalized.includes("cleanup") ||
-    normalized.includes("skin") ||
-    normalized.includes("bleach") ||
-    normalized.includes("d-tan") ||
-    normalized.includes("makeup") ||
-    normalized.includes("bridal")
+    BEAUTY_KEYWORDS.some((keyword) =>
+      value.includes(keyword),
+    )
   ) {
     return [
       "Beauty Specialist",
@@ -140,7 +135,7 @@ function getStylists(service: string): string[] {
 function buildWhatsAppMessage(
   booking: BookingFormValues,
 ): string {
-  const lines: string[] = [
+  const lines = [
     "Hello Sagar Family Salon 👋",
     "",
     "I would like to book an appointment.",
@@ -152,8 +147,12 @@ function buildWhatsAppMessage(
     "",
     "💇 APPOINTMENT DETAILS",
     `Service: ${booking.service}`,
-    `Preferred date: ${booking.date || "Not specified"}`,
-    `Preferred time: ${booking.time || "Not specified"}`,
+    `Preferred date: ${
+      booking.date || "Not specified"
+    }`,
+    `Preferred time: ${
+      booking.time || "Not specified"
+    }`,
     `Preferred specialist: ${
       booking.stylist || "Any Available Specialist"
     }`,
@@ -193,8 +192,8 @@ export function BookingForm() {
   const [sending, setSending] =
     useState(false);
 
-  function setField<K extends keyof BookingFormValues>(
-    key: K,
+  function setField(
+    key: keyof BookingFormValues,
     value: string,
   ) {
     setValues((current) => ({
@@ -208,15 +207,24 @@ export function BookingForm() {
     }));
   }
 
-  function handleServiceChange(service: string) {
-    setField("service", service);
-
-    const specialists = getStylists(service);
+  function handleServiceChange(
+    service: string,
+  ) {
+    const specialists =
+      getStylists(service);
 
     setValues((current) => ({
       ...current,
       service,
-      stylist: specialists[0] ?? "Any Available Specialist",
+      stylist:
+        specialists[0] ??
+        "Any Available Specialist",
+    }));
+
+    setErrors((current) => ({
+      ...current,
+      service: undefined,
+      stylist: undefined,
     }));
   }
 
@@ -225,14 +233,15 @@ export function BookingForm() {
   ) {
     event.preventDefault();
 
-    const parsed = bookingSchema.safeParse({
-      name: values.name.trim(),
-      phone: values.phone.trim(),
-      email: values.email.trim(),
-      service: values.service,
-      date: values.date,
-      notes: values.notes.trim(),
-    });
+    const parsed =
+      bookingSchema.safeParse({
+        name: values.name.trim(),
+        phone: values.phone.trim(),
+        email: values.email.trim(),
+        service: values.service,
+        date: values.date,
+        notes: values.notes.trim(),
+      });
 
     if (!parsed.success) {
       const fieldErrors: FieldErrors = {};
@@ -250,17 +259,23 @@ export function BookingForm() {
       return;
     }
 
+    const selectErrors: FieldErrors = {};
+
     if (!values.time) {
-      setErrors({
-        time: "Please choose a preferred time.",
-      });
-      return;
+      selectErrors.time =
+        "Please choose a preferred time.";
     }
 
     if (!values.stylist) {
-      setErrors({
-        stylist: "Please choose a specialist.",
-      });
+      selectErrors.stylist =
+        "Please choose a specialist.";
+    }
+
+    if (Object.keys(selectErrors).length > 0) {
+      setErrors((current) => ({
+        ...current,
+        ...selectErrors,
+      }));
       return;
     }
 
@@ -270,9 +285,10 @@ export function BookingForm() {
     let confirmationEmailed = false;
 
     try {
-      const result = await submitBooking({
-        data: parsed.data,
-      });
+      const result =
+        await submitBooking({
+          data: parsed.data,
+        });
 
       emailed = result.emailed;
       confirmationEmailed =
@@ -288,53 +304,61 @@ export function BookingForm() {
       const message =
         buildWhatsAppMessage(values);
 
-      const url = whatsappLink(message);
-
       window.open(
-        url,
+        whatsappLink(message),
         "_blank",
         "noopener,noreferrer",
       );
     }
 
     setSending(false);
-
     setValues(EMPTY);
     setErrors({});
 
-    const confirmationMessage =
+    const confirmationNote =
       confirmationEmailed
         ? " A confirmation email has also been sent."
         : "";
 
     if (emailed && HAS_WHATSAPP) {
-      toast.success("Booking request prepared!", {
-        description:
-          "Your complete booking details are ready in WhatsApp. Just press Send." +
-          confirmationMessage,
-      });
+      toast.success(
+        "Booking request prepared!",
+        {
+          description:
+            "Your complete booking details are ready in WhatsApp. Just press Send." +
+            confirmationNote,
+        },
+      );
     } else if (emailed) {
-      toast.success("Booking request sent!", {
-        description:
-          "The salon has received your booking request by email." +
-          confirmationMessage,
-      });
+      toast.success(
+        "Booking request sent!",
+        {
+          description:
+            "The salon has received your booking request by email." +
+            confirmationNote,
+        },
+      );
     } else if (HAS_WHATSAPP) {
-      toast.success("WhatsApp is ready!", {
-        description:
-          "Your complete appointment details are pre-filled. Just press Send.",
-      });
+      toast.success(
+        "WhatsApp is ready!",
+        {
+          description:
+            "Your complete appointment details are pre-filled. Just press Send.",
+        },
+      );
     } else {
-      toast.success("Details saved!", {
-        description:
-          "Please contact the salon to confirm your appointment.",
-      });
+      toast.success(
+        "Details noted!",
+        {
+          description:
+            "Please contact the salon to confirm your appointment.",
+        },
+      );
     }
   }
 
-  const stylistOptions = getStylists(
-    values.service,
-  );
+  const stylistOptions =
+    getStylists(values.service);
 
   return (
     <form
@@ -361,7 +385,7 @@ export function BookingForm() {
             placeholder="Full name"
             maxLength={100}
             autoComplete="name"
-            aria-invalid={!!errors.name}
+            aria-invalid={Boolean(errors.name)}
           />
 
           {errors.name && (
@@ -389,7 +413,9 @@ export function BookingForm() {
             placeholder="+91 9876543210"
             maxLength={20}
             autoComplete="tel"
-            aria-invalid={!!errors.phone}
+            aria-invalid={Boolean(
+              errors.phone,
+            )}
           />
 
           {errors.phone && (
@@ -419,7 +445,9 @@ export function BookingForm() {
           placeholder="you@example.com"
           maxLength={254}
           autoComplete="email"
-          aria-invalid={!!errors.email}
+          aria-invalid={Boolean(
+            errors.email,
+          )}
         />
 
         {errors.email && (
@@ -429,8 +457,8 @@ export function BookingForm() {
         )}
 
         <p className="text-xs text-muted-foreground">
-          We'll send your appointment confirmation
-          to this email address.
+          We'll send your appointment
+          confirmation to this email address.
         </p>
       </div>
 
@@ -443,11 +471,15 @@ export function BookingForm() {
 
           <Select
             value={values.service}
-            onValueChange={handleServiceChange}
+            onValueChange={
+              handleServiceChange
+            }
           >
             <SelectTrigger
               id="booking-service"
-              aria-invalid={!!errors.service}
+              aria-invalid={Boolean(
+                errors.service,
+              )}
             >
               <SelectValue placeholder="Choose a service" />
             </SelectTrigger>
@@ -463,38 +495,6 @@ export function BookingForm() {
                   </SelectItem>
                 ),
               )}
-
-              {/* Extra service options if they are not
-                  already present in SERVICE_CATEGORIES */}
-              {HAIR_SERVICES.filter(
-                (service) =>
-                  !SERVICE_CATEGORIES.some(
-                    (category) =>
-                      category.title === service,
-                  ),
-              ).map((service) => (
-                <SelectItem
-                  key={`hair-${service}`}
-                  value={service}
-                >
-                  {service}
-                </SelectItem>
-              ))}
-
-              {BEAUTY_SERVICES.filter(
-                (service) =>
-                  !SERVICE_CATEGORIES.some(
-                    (category) =>
-                      category.title === service,
-                  ),
-              ).map((service) => (
-                <SelectItem
-                  key={`beauty-${service}`}
-                  value={service}
-                >
-                  {service}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
 
@@ -525,7 +525,9 @@ export function BookingForm() {
                 event.target.value,
               )
             }
-            aria-invalid={!!errors.date}
+            aria-invalid={Boolean(
+              errors.date,
+            )}
           />
 
           {errors.date && (
@@ -536,7 +538,7 @@ export function BookingForm() {
         </div>
       </div>
 
-      {/* TIME + STYLIST */}
+      {/* TIME + SPECIALIST */}
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="booking-time">
@@ -545,13 +547,24 @@ export function BookingForm() {
 
           <Select
             value={values.time}
-            onValueChange={(value) =>
-              setField("time", value)
-            }
+            onValueChange={(value) => {
+              setValues((current) => ({
+                ...current,
+                time: value,
+              }));
+
+              setErrors((current) => ({
+                ...current,
+                time: undefined,
+              }));
+            }}
           >
             <SelectTrigger
               id="booking-time"
-              aria-invalid={!!errors.time}
+              aria-invalid={
+                Boolean(errors.time) &&
+                !values.time
+              }
             >
               <SelectValue placeholder="Choose a time" />
             </SelectTrigger>
@@ -568,11 +581,12 @@ export function BookingForm() {
             </SelectContent>
           </Select>
 
-          {errors.time && (
-            <p className="text-sm text-destructive">
-              {errors.time}
-            </p>
-          )}
+          {!values.time &&
+            errors.time && (
+              <p className="text-sm text-destructive">
+                {errors.time}
+              </p>
+            )}
         </div>
 
         <div className="space-y-2">
@@ -582,16 +596,24 @@ export function BookingForm() {
 
           <Select
             value={values.stylist}
-            onValueChange={(value) =>
-              setField(
-                "stylist",
-                value,
-              )
-            }
+            onValueChange={(value) => {
+              setValues((current) => ({
+                ...current,
+                stylist: value,
+              }));
+
+              setErrors((current) => ({
+                ...current,
+                stylist: undefined,
+              }));
+            }}
           >
             <SelectTrigger
               id="booking-stylist"
-              aria-invalid={!!errors.stylist}
+              aria-invalid={
+                Boolean(errors.stylist) &&
+                !values.stylist
+              }
             >
               <SelectValue placeholder="Choose a specialist" />
             </SelectTrigger>
@@ -610,11 +632,12 @@ export function BookingForm() {
             </SelectContent>
           </Select>
 
-          {errors.stylist && (
-            <p className="text-sm text-destructive">
-              {errors.stylist}
-            </p>
-          )}
+          {!values.stylist &&
+            errors.stylist && (
+              <p className="text-sm text-destructive">
+                {errors.stylist}
+              </p>
+            )}
         </div>
       </div>
 
@@ -633,7 +656,9 @@ export function BookingForm() {
             )
           }
         >
-          <SelectTrigger id="booking-occasion">
+          <SelectTrigger
+            id="booking-occasion"
+          >
             <SelectValue placeholder="Select if applicable" />
           </SelectTrigger>
 

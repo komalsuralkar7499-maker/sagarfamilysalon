@@ -469,3 +469,234 @@ function AdminDashboard() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-3xl bg-card shadow-elegant">
+          {filteredBookings.length === 0 ? (
+            <div className="p-10 text-center">
+              <CalendarDays className="mx-auto h-10 w-10 text-muted-foreground" />
+
+              <h3 className="mt-4 font-display text-xl font-bold">
+                No bookings found
+              </h3>
+
+              <p className="mt-2 text-sm text-muted-foreground">
+                New appointment requests will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {filteredBookings.map((booking) => (
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  onStatusChange={updateStatus}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* FOOTER NOTE */}
+      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-gold/20 bg-secondary/50 p-5 text-center">
+          <p className="text-xs leading-5 text-muted-foreground">
+            Dashboard data is currently stored locally in this
+            browser. For a real multi-device owner dashboard with
+            secure login, permanent bookings and live analytics,
+            connect this dashboard to a backend/database next.
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: number;
+  icon: ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl bg-card p-5 shadow-elegant">
+      <div className="flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+          {icon}
+        </div>
+
+        <span className="text-3xl font-bold">
+          {value}
+        </span>
+      </div>
+
+      <p className="mt-4 text-sm font-medium text-muted-foreground">
+        {title}
+      </p>
+    </div>
+  );
+}
+
+function StatusRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-muted-foreground">
+        {label}
+      </span>
+
+      <span className="font-bold">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function BookingCard({
+  booking,
+  onStatusChange,
+}: {
+  booking: Booking;
+  onStatusChange: (
+    id: string,
+    status: BookingStatus,
+  ) => void;
+}) {
+  return (
+    <div className="p-6">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        {/* CUSTOMER DETAILS */}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="font-display text-xl font-bold">
+              {booking.name}
+            </h3>
+
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {booking.status}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-primary" />
+              <a
+                href={`tel:${booking.phone}`}
+                className="hover:text-primary"
+              >
+                {booking.phone}
+              </a>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              <a
+                href={`mailto:${booking.email}`}
+                className="truncate hover:text-primary"
+              >
+                {booking.email}
+              </a>
+            </div>
+
+            <p>
+              💇 <span className="font-medium text-foreground">
+                {booking.service}
+              </span>
+            </p>
+
+            <p>
+              📅 {formatDate(booking.date)} • {booking.time}
+            </p>
+
+            <p>
+              👤 {booking.stylist || "Any Specialist"}
+            </p>
+
+            <p>
+              🎉 {booking.occasion || "Not specified"}
+            </p>
+          </div>
+
+          {booking.notes && (
+            <div className="mt-4 rounded-2xl bg-secondary/60 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                Additional notes
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                {booking.notes}
+              </p>
+            </div>
+          )}
+
+          <p className="mt-3 text-xs text-muted-foreground">
+            Request received: {formatCreatedAt(booking.createdAt)}
+          </p>
+        </div>
+
+        {/* ACTIONS */}
+        <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end">
+          <a
+            href={`https://wa.me/91${booking.phone.replace(/\D/g, "")}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+          >
+            <MessageCircle className="h-4 w-4" />
+            WhatsApp
+          </a>
+
+          <a
+            href={`tel:${booking.phone}`}
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold transition hover:bg-secondary"
+          >
+            <Phone className="h-4 w-4" />
+            Call
+          </a>
+
+          <button
+            type="button"
+            onClick={() =>
+              onStatusChange(booking.id, "Confirmed")
+            }
+            disabled={booking.status === "Confirmed"}
+            className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Confirm
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              onStatusChange(booking.id, "Completed")
+            }
+            disabled={booking.status === "Completed"}
+            className="rounded-full border border-border px-4 py-2 text-xs font-semibold transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Complete
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              onStatusChange(booking.id, "Cancelled")
+            }
+            disabled={booking.status === "Cancelled"}
+            className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

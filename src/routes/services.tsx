@@ -1,14 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, IndianRupee } from "lucide-react";
+
 import {
   SALON,
   SERVICE_CATEGORIES,
   SERVICE_PRICES,
 } from "@/lib/salon";
+
 import {
   BookAppointmentCta,
   WhatsAppCta,
 } from "@/components/cta-buttons";
+
+import { SmartPriceEstimator } from "@/components/SmartPriceEstimator";
+
 import {
   Accordion,
   AccordionContent,
@@ -62,6 +67,7 @@ export const Route = createFileRoute("/services")({
       },
     ],
   }),
+
   component: ServicesPage,
 });
 
@@ -95,7 +101,9 @@ function formatPrice(price: number): string {
 function ServicesPage() {
   return (
     <>
-      {/* HERO */}
+      {/* =====================================================
+          HERO
+      ====================================================== */}
       <section className="bg-noir text-noir-foreground">
         <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 lg:py-20">
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-gold">
@@ -125,7 +133,9 @@ function ServicesPage() {
         <div className="gold-rule mx-auto max-w-6xl" />
       </section>
 
-      {/* SERVICE OVERVIEW */}
+      {/* =====================================================
+          SERVICE OVERVIEW
+      ====================================================== */}
       <section
         className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20"
         aria-labelledby="services-heading"
@@ -211,7 +221,19 @@ function ServicesPage() {
         </div>
       </section>
 
-      {/* COMPLETE PRICE LIST */}
+      {/* =====================================================
+          SMART PRICE ESTIMATOR
+      ====================================================== */}
+      <section
+        id="price-estimator"
+        className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:pb-20"
+      >
+        <SmartPriceEstimator />
+      </section>
+
+      {/* =====================================================
+          COMPLETE PRICE LIST
+      ====================================================== */}
       <section className="bg-secondary/50">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
           <div className="text-center">
@@ -287,7 +309,9 @@ function ServicesPage() {
         </div>
       </section>
 
-      {/* DETAILED FAQ */}
+      {/* =====================================================
+          DETAILED FAQ
+      ====================================================== */}
       <section
         className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:py-20"
         aria-labelledby="faq-heading"
@@ -315,16 +339,14 @@ function ServicesPage() {
               id={cat.id}
               className="scroll-mt-24 rounded-3xl bg-card p-6 shadow-elegant sm:p-10"
             >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-display text-2xl font-bold sm:text-3xl">
-                    {cat.title}
-                  </h3>
+              <div>
+                <h3 className="font-display text-2xl font-bold sm:text-3xl">
+                  {cat.title}
+                </h3>
 
-                  <p className="mt-3 leading-relaxed text-muted-foreground">
-                    {cat.description}
-                  </p>
-                </div>
+                <p className="mt-3 leading-relaxed text-muted-foreground">
+                  {cat.description}
+                </p>
               </div>
 
               {/* SERVICES + PRICES */}
@@ -347,6 +369,7 @@ function ServicesPage() {
                       >
                         <div className="flex items-start gap-2.5 text-sm">
                           <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+
                           <span>{service}</span>
                         </div>
 
@@ -399,7 +422,9 @@ function ServicesPage() {
           ))}
         </div>
 
-        {/* CTA */}
+        {/* ===================================================
+            FINAL CTA
+        ==================================================== */}
         <div className="mt-16 rounded-3xl bg-noir p-8 text-center text-noir-foreground sm:p-12">
           <p className="text-sm font-medium uppercase tracking-[0.25em] text-gold">
             Need help choosing?

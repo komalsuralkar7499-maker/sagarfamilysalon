@@ -1,9 +1,5 @@
 import { useState, type FormEvent } from "react";
-import {
-  CalendarCheck,
-  Loader2,
-  MessageCircle,
-} from "lucide-react";
+import { MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -12,12 +8,7 @@ import {
   whatsappLink,
 } from "@/lib/salon";
 
-import {
-  bookingSchema,
-  type BookingRequest,
-} from "@/lib/booking-schema";
-
-import { submitBooking } from "@/lib/booking.functions";
+import { bookingSchema } from "@/lib/booking-schema";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,10 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type BookingFormValues = BookingRequest & {
+type BookingFormValues = {
+  name: string;
+  phone: string;
+  email: string;
+  service: string;
+  date: string;
   time: string;
   stylist: string;
   occasion: string;
+  notes: string;
 };
 
 type FieldErrors = Partial<
@@ -47,10 +44,10 @@ const EMPTY: BookingFormValues = {
   email: "",
   service: "",
   date: "",
-  notes: "",
   time: "",
   stylist: "",
   occasion: "",
+  notes: "",
 };
 
 const TIME_OPTIONS = [
@@ -88,9 +85,7 @@ function formatDate(date: string): string {
 
   const parts = date.split("-");
 
-  if (parts.length !== 3) {
-    return date;
-  }
+  if (parts.length !== 3) return date;
 
   const [year, month, day] = parts;
 
@@ -105,12 +100,12 @@ function buildWhatsAppMessage(
     "",
     "I would like to book an appointment.",
     "",
-    "👤 Customer Details",
+    "👤 CUSTOMER DETAILS",
     `Name: ${booking.name.trim()}`,
     `Phone: ${booking.phone.trim()}`,
     `Email: ${booking.email.trim()}`,
     "",
-    "💇 Appointment Details",
+    "💇 APPOINTMENT DETAILS",
     `Service: ${booking.service.trim()}`,
     `Preferred date: ${formatDate(booking.date)}`,
     `Preferred time: ${booking.time || "Not specified"}`,
@@ -125,7 +120,7 @@ function buildWhatsAppMessage(
   if (booking.notes.trim()) {
     lines.push(
       "",
-      "📝 Additional Notes",
+      "📝 ADDITIONAL NOTES",
       booking.notes.trim(),
     );
   }
@@ -134,7 +129,7 @@ function buildWhatsAppMessage(
     "",
     "Please confirm whether this date and time slot is available.",
     "",
-    "Thank you!",
+    "Thank you! 🙏",
   );
 
   return lines.join("\n");
@@ -147,8 +142,7 @@ export function BookingForm() {
   const [errors, setErrors] =
     useState<FieldErrors>({});
 
-  const [sending, setSending] =
-    useState(false);
+  const [sending, setSending] = useState(false);
 
   function setField(
     key: keyof BookingFormValues,
@@ -165,24 +159,35 @@ export function BookingForm() {
     }));
   }
 
-  async function onSubmit(
+  function onSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
     if (sending) return;
 
-    const baseData: BookingRequest = {
+    if (!HAS_WHATSAPP) {
+      toast.error("WhatsApp booking is unavailable.", {
+        description:
+          "Please contact Sagar Family Salon by phone.",
+      });
+      return;
+    }
+
+    const dataForValidation = {
       name: values.name.trim(),
       phone: values.phone.trim(),
       email: values.email.trim(),
       service: values.service.trim(),
       date: values.date.trim(),
+      time: values.time.trim(),
+      stylist:
+        values.stylist.trim() || "Any Specialist",
       notes: values.notes.trim(),
     };
 
     const parsed =
-      bookingSchema.safeParse(baseData);
+      bookingSchema.safeParse(dataForValidation);
 
     const nextErrors: FieldErrors = {};
 
@@ -197,104 +202,65 @@ export function BookingForm() {
       }
     }
 
-    // TIME IS REQUIRED
     if (!values.time) {
       nextErrors.time =
         "Please choose a preferred time";
     }
 
-    /*
-     * SPECIALIST IS OPTIONAL.
-     * Do NOT add validation here.
-     */
-
-    if (Object.keys(nextErrors).length > 0) {
+    if (
+      Object.keys(nextErrors).length > 0
+    ) {
       setErrors(nextErrors);
 
-      toast.error("Please complete the required fields.", {
-        description:
-          "Name, phone, email, service, date and preferred time are required.",
-      });
+      toast.error(
+        "Please complete the required fields.",
+        {
+          description:
+            "Name, phone, email, service, date and preferred time are required.",
+        },
+      );
 
       return;
     }
 
-    /*
-     * Build WhatsApp message using the complete
-     * information entered by the customer.
-     */
-    const message =
-      buildWhatsAppMessage(values);
-
-    /*
-     * Open WhatsApp immediately after the user click.
-     * This helps prevent mobile browsers from blocking
-     * the new tab/window as a popup.
-     */
-    if (HAS_WHATSAPP) {
-      try {
-        window.open(
-          whatsappLink(message),
-          "_blank",
-          "noopener,noreferrer",
-        );
-      } catch (error) {
-        console.error(
-          "WhatsApp could not be opened:",
-          error,
-        );
-      }
-    }
-
     setSending(true);
 
-    let emailed = false;
-    let confirmationEmailed = false;
-
     try {
+      const message =
+        buildWhatsAppMessage(values);
+
+      const url = whatsappLink(message);
+
       /*
-       * Only validated bookingSchema data is sent to
-       * the server. No secret/API key is exposed here.
+       * Use a normal anchor-style navigation.
+       * This is more reliable on mobile browsers
+       * than depending on popup behavior.
        */
-      const result = await submitBooking({
-        data: parsed.data,
+      window.location.href = url;
+
+      toast.success("Opening WhatsApp…", {
+        description:
+          "Your appointment details are ready. Press Send in WhatsApp to submit the request.",
       });
 
-      emailed = result.emailed;
-      confirmationEmailed =
-        result.confirmationEmailed;
+      setValues(EMPTY);
+      setErrors({});
     } catch (error) {
       console.error(
-        "Booking submission failed:",
+        "WhatsApp booking error:",
         error,
+      );
+
+      toast.error(
+        "Unable to open WhatsApp.",
+        {
+          description:
+            "Please contact the salon directly.",
+        },
       );
     } finally {
       setSending(false);
     }
-
-    if (emailed) {
-      toast.success("Appointment request sent!", {
-        description:
-          HAS_WHATSAPP
-            ? "Your complete booking details are ready in WhatsApp. Just press Send."
-            : confirmationEmailed
-              ? "The salon has received your request."
-              : "Your request has been submitted.",
-      });
-    } else if (HAS_WHATSAPP) {
-      toast.success("WhatsApp is ready!", {
-        description:
-          "Your complete booking details are prefilled. Just press Send.",
-      });
-    } else {
-      toast.success("Booking details noted.", {
-        description:
-          "Please contact the salon to confirm your appointment.",
-      });
-    }
-
-    setValues(EMPTY);
-    setErrors({});
   }
 
   return (
@@ -389,16 +355,10 @@ export function BookingForm() {
             {errors.email}
           </p>
         )}
-
-        <p className="text-xs text-muted-foreground">
-          We'll send your appointment confirmation
-          to this address.
-        </p>
       </div>
 
       {/* SERVICE + DATE */}
       <div className="grid gap-5 sm:grid-cols-2">
-        {/* SERVICE */}
         <div className="space-y-2">
           <Label htmlFor="booking-service">
             Service *
@@ -440,7 +400,6 @@ export function BookingForm() {
           )}
         </div>
 
-        {/* DATE */}
         <div className="space-y-2">
           <Label htmlFor="booking-date">
             Preferred date *
@@ -469,7 +428,6 @@ export function BookingForm() {
 
       {/* TIME + SPECIALIST */}
       <div className="grid gap-5 sm:grid-cols-2">
-        {/* TIME - REQUIRED */}
         <div className="space-y-2">
           <Label htmlFor="booking-time">
             Preferred time *
@@ -483,9 +441,7 @@ export function BookingForm() {
           >
             <SelectTrigger
               id="booking-time"
-              aria-invalid={Boolean(
-                errors.time,
-              )}
+              aria-invalid={Boolean(errors.time)}
             >
               <SelectValue placeholder="Choose a time" />
             </SelectTrigger>
@@ -509,7 +465,6 @@ export function BookingForm() {
           )}
         </div>
 
-        {/* SPECIALIST - OPTIONAL */}
         <div className="space-y-2">
           <Label htmlFor="booking-stylist">
             Preferred specialist
@@ -551,7 +506,8 @@ export function BookingForm() {
           )}
 
           <p className="text-xs text-muted-foreground">
-            Optional — leave as Any specialist if you don't have a preference.
+            Optional — leave as Any specialist if
+            you don't have a preference.
           </p>
         </div>
       </div>
@@ -627,24 +583,19 @@ export function BookingForm() {
       >
         {sending ? (
           <Loader2 className="h-5 w-5 animate-spin" />
-        ) : HAS_WHATSAPP ? (
-          <MessageCircle className="h-5 w-5" />
         ) : (
-          <CalendarCheck className="h-5 w-5" />
+          <MessageCircle className="h-5 w-5" />
         )}
 
         {sending
-          ? "Sending..."
-          : "Request Appointment"}
+          ? "Opening WhatsApp..."
+          : "Book via WhatsApp"}
       </button>
 
       <p className="text-center text-xs leading-relaxed text-muted-foreground">
-        Your booking details will be sent to the
-        salon for confirmation.
-        {HAS_WHATSAPP
-          ? " WhatsApp will open with your complete booking message."
-          : ""}
-        {" "}No payment is taken online.
+        Your appointment details will be prepared
+        in WhatsApp for salon confirmation. No
+        payment is taken online.
       </p>
     </form>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CalendarDays,
@@ -9,6 +9,9 @@ import {
   TrendingUp,
   IndianRupee,
   RefreshCw,
+  Phone,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -90,10 +93,7 @@ function readBookings(): Booking[] {
 }
 
 function saveBookings(bookings: Booking[]) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(bookings),
-  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
 }
 
 function formatDate(date: string) {
@@ -106,21 +106,28 @@ function formatDate(date: string) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+function formatCreatedAt(date: string) {
+  if (!date) return "—";
+
+  try {
+    return new Date(date).toLocaleString("en-IN", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return date;
+  }
+}
+
 function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filter, setFilter] = useState<
-    "All" | BookingStatus
-  >("All");
+  const [filter, setFilter] = useState<"All" | BookingStatus>("All");
 
   useEffect(() => {
     const stored = readBookings();
 
     setBookings(stored);
 
-    /*
-     * If this is the first visit, create demo data so
-     * the dashboard has something to display.
-     */
     if (!localStorage.getItem(STORAGE_KEY)) {
       saveBookings(DEMO_BOOKINGS);
     }
@@ -193,7 +200,7 @@ function AdminDashboard() {
     setBookings(readBookings());
   }
 
-  function clearDemoBookings() {
+  function clearAllBookings() {
     const confirmed = window.confirm(
       "Remove all dashboard bookings? This cannot be undone.",
     );
@@ -236,7 +243,7 @@ function AdminDashboard() {
 
               <button
                 type="button"
-                onClick={clearDemoBookings}
+                onClick={clearAllBookings}
                 className="inline-flex items-center gap-2 rounded-full border border-red-400/40 px-5 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500 hover:text-white"
               >
                 <XCircle className="h-4 w-4" />
@@ -279,6 +286,7 @@ function AdminDashboard() {
       {/* ANALYTICS */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-3">
+          {/* POPULAR SERVICES */}
           <div className="rounded-3xl bg-card p-6 shadow-elegant">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -302,49 +310,48 @@ function AdminDashboard() {
                   No booking data yet.
                 </p>
               ) : (
-                serviceStats.map(
-                  ([service, count], index) => {
-                    const percentage =
-                      bookings.length > 0
-                        ? Math.round(
-                            (count / bookings.length) * 100,
-                          )
-                        : 0;
+                serviceStats.map(([service, count], index) => {
+                  const percentage =
+                    bookings.length > 0
+                      ? Math.round(
+                          (count / bookings.length) * 100,
+                        )
+                      : 0;
 
-                    return (
-                      <div key={service}>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm font-medium">
-                            {service}
-                          </span>
+                  return (
+                    <div key={service}>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium">
+                          {service}
+                        </span>
 
-                          <span className="text-sm font-bold text-primary">
-                            {count}
-                          </span>
-                        </div>
-
-                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-                          <div
-                            className="h-full rounded-full bg-primary transition-all"
-                            style={{
-                              width: `${percentage}%`,
-                            }}
-                          />
-                        </div>
-
-                        {index === 0 && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Most requested service
-                          </p>
-                        )}
+                        <span className="text-sm font-bold text-primary">
+                          {count}
+                        </span>
                       </div>
-                    );
-                  },
-                )
+
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{
+                            width: `${percentage}%`,
+                          }}
+                        />
+                      </div>
+
+                      {index === 0 && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Most requested service
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
 
+          {/* STATUS */}
           <div className="rounded-3xl bg-card p-6 shadow-elegant">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/10 text-gold">
@@ -385,6 +392,7 @@ function AdminDashboard() {
             </div>
           </div>
 
+          {/* BUSINESS INSIGHTS */}
           <div className="rounded-3xl bg-noir p-6 text-noir-foreground shadow-elegant">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/15">
               <IndianRupee className="h-5 w-5 text-gold" />
@@ -399,14 +407,26 @@ function AdminDashboard() {
               service popularity and enquiry tracking.
             </p>
 
-            <div className="mt-6 rounded-2xl border border-gold/20 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-wider text-gold">
-                Current customers
-              </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-gold/20 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-wider text-gold">
+                  Customers
+                </p>
 
-              <p className="mt-1 text-3xl font-bold">
-                {stats.customers}
-              </p>
+                <p className="mt-1 text-3xl font-bold">
+                  {stats.customers}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-gold/20 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-wider text-gold">
+                  Completed
+                </p>
+
+                <p className="mt-1 text-3xl font-bold">
+                  {stats.completed}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -449,77 +469,3 @@ function AdminDashboard() {
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="mt-6 overflow-hidden rounded-3xl bg-card shadow-elegant">
-          {filteredBookings.length === 0 ? (
-            <div className="p-10 text-center">
-              <CalendarDays className="mx-auto h-10 w-10 text-muted-foreground" />
-
-              <h3 className="mt-4 font-display text-xl font-bold">
-                No bookings found
-              </h3>
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                New appointment requests will appear here.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredBookings.map((booking) => (
-                <BookingCard
-                  key={booking.id}
-                  booking={booking}
-                  onStatusChange={updateStatus}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* FOOTER NOTE */}
-      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-gold/20 bg-secondary/50 p-5 text-center">
-          <p className="text-xs leading-5 text-muted-foreground">
-            Dashboard data is currently stored locally in this
-            browser. For a real multi-device owner dashboard with
-            secure login, permanent bookings and live analytics,
-            connect this dashboard to a backend/database next.
-          </p>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function StatCard({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl bg-card p-5 shadow-elegant">
-      <div className="flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-          {icon}
-        </div>
-
-        <span className="text-3xl font-bold">
-          {value}
-        </span>
-      </div>
-
-      <p className="mt-4 text-sm font-medium text-muted-foreground">
-        {title}
-      </p>
-    </div>
-  );
-}
-
-function StatusRow({
-  label,

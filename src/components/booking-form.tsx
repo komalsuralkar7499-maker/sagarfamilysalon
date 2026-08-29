@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import {
   HAS_WHATSAPP,
-  SERVICE_CATEGORIES,
+  SERVICE_PRICES,
   whatsappLink,
 } from "@/lib/salon";
 
@@ -80,6 +80,22 @@ const OCCASION_OPTIONS = [
   "Other",
 ];
 
+/**
+ * Build one flat list of all available salon services.
+ *
+ * The service names and prices come from SERVICE_PRICES
+ * so the WhatsApp message always uses the same pricing
+ * source as the website.
+ */
+const SERVICE_OPTIONS = SERVICE_PRICES.flatMap(
+  (category) =>
+    category.services.map((service) => ({
+      category: category.category,
+      name: service.name,
+      price: service.price,
+    })),
+);
+
 function formatDate(date: string): string {
   if (!date) return "Not specified";
 
@@ -89,12 +105,60 @@ function formatDate(date: string): string {
 
   const [year, month, day] = parts;
 
+  if (
+    !year ||
+    !month ||
+    !day ||
+    year.length !== 4 ||
+    month.length !== 2 ||
+    day.length !== 2
+  ) {
+    return date;
+  }
+
   return `${day}/${month}/${year}`;
+}
+
+/**
+ * Find the exact price of the selected service.
+ *
+ * Returns a safe fallback if the service cannot be found.
+ */
+function getServicePrice(
+  serviceName: string,
+): number | null {
+  const normalized = serviceName
+    .trim()
+    .toLowerCase();
+
+  if (!normalized) return null;
+
+  const service = SERVICE_OPTIONS.find(
+    (item) =>
+      item.name.trim().toLowerCase() ===
+      normalized,
+  );
+
+  return service?.price ?? null;
+}
+
+function formatPrice(
+  serviceName: string,
+): string {
+  const price = getServicePrice(serviceName);
+
+  if (price === null) {
+    return "Price to be confirmed";
+  }
+
+  return `₹${price.toLocaleString("en-IN")}`;
 }
 
 function buildWhatsAppMessage(
   booking: BookingFormValues,
 ): string {
+  const serviceName = booking.service.trim();
+
   const lines = [
     "Hello Sagar Family Salon 👋",
     "",
@@ -106,14 +170,17 @@ function buildWhatsAppMessage(
     `Email: ${booking.email.trim()}`,
     "",
     "💇 APPOINTMENT DETAILS",
-    `Service: ${booking.service.trim()}`,
+    `Service: ${serviceName}`,
+    `Price: ${formatPrice(serviceName)}`,
     `Preferred date: ${formatDate(booking.date)}`,
-    `Preferred time: ${booking.time || "Not specified"}`,
+    `Preferred time: ${
+      booking.time.trim() || "Not specified"
+    }`,
     `Preferred specialist: ${
-      booking.stylist || "Any Specialist"
+      booking.stylist.trim() || "Any Specialist"
     }`,
     `Occasion / requirement: ${
-      booking.occasion || "Not specified"
+      booking.occasion.trim() || "Not specified"
     }`,
   ];
 
@@ -167,10 +234,14 @@ export function BookingForm() {
     if (sending) return;
 
     if (!HAS_WHATSAPP) {
-      toast.error("WhatsApp booking is unavailable.", {
-        description:
-          "Please contact Sagar Family Salon by phone.",
-      });
+      toast.error(
+        "WhatsApp booking is unavailable.",
+        {
+          description:
+            "Please contact Sagar Family Salon by phone.",
+        },
+      );
+
       return;
     }
 
@@ -182,12 +253,15 @@ export function BookingForm() {
       date: values.date.trim(),
       time: values.time.trim(),
       stylist:
-        values.stylist.trim() || "Any Specialist",
+        values.stylist.trim() ||
+        "Any Specialist",
       notes: values.notes.trim(),
     };
 
     const parsed =
-      bookingSchema.safeParse(dataForValidation);
+      bookingSchema.safeParse(
+        dataForValidation,
+      );
 
     const nextErrors: FieldErrors = {};
 
@@ -196,15 +270,36 @@ export function BookingForm() {
         const field =
           issue.path[0] as keyof BookingFormValues;
 
-        if (!nextErrors[field]) {
-          nextErrors[field] = issue.message;
+        if (
+          field &&
+          !nextErrors[field]
+        ) {
+          nextErrors[field] =
+            issue.message;
         }
       }
     }
 
-    if (!values.time) {
+    if (!values.time.trim()) {
       nextErrors.time =
         "Please choose a preferred time";
+    }
+
+    /**
+     * Extra protection:
+     * make sure the selected service exists
+     * in our official salon price list.
+     */
+    const selectedService =
+      SERVICE_OPTIONS.find(
+        (service) =>
+          service.name ===
+          values.service.trim(),
+      );
+
+    if (!selectedService) {
+      nextErrors.service =
+        "Please choose a valid service";
     }
 
     if (
@@ -231,372 +326,17 @@ export function BookingForm() {
 
       const url = whatsappLink(message);
 
-      /*
-       * Use a normal anchor-style navigation.
-       * This is more reliable on mobile browsers
-       * than depending on popup behavior.
+      /**
+       * whatsappLink() already URL-encodes
+       * the message using encodeURIComponent().
+       *
+       * We do not inject raw HTML or execute
+       * user-provided content.
        */
       window.location.href = url;
 
-      toast.success("Opening WhatsApp…", {
-        description:
-          "Your appointment details are ready. Press Send in WhatsApp to submit the request.",
-      });
-
-      setValues(EMPTY);
-      setErrors({});
-    } catch (error) {
-      console.error(
-        "WhatsApp booking error:",
-        error,
-      );
-
-      toast.error(
-        "Unable to open WhatsApp.",
+      toast.success(
+        "Opening WhatsApp…",
         {
           description:
-            "Please contact the salon directly.",
-        },
-      );
-    } finally {
-      setSending(false);
-    }
-  }
-
-  return (
-    <form
-      onSubmit={onSubmit}
-      noValidate
-      className="space-y-6"
-    >
-      {/* NAME + PHONE */}
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="booking-name">
-            Your name *
-          </Label>
-
-          <Input
-            id="booking-name"
-            type="text"
-            value={values.name}
-            onChange={(event) =>
-              setField(
-                "name",
-                event.target.value,
-              )
-            }
-            placeholder="Full name"
-            maxLength={100}
-            autoComplete="name"
-            aria-invalid={Boolean(errors.name)}
-          />
-
-          {errors.name && (
-            <p className="text-sm text-destructive">
-              {errors.name}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="booking-phone">
-            Phone number *
-          </Label>
-
-          <Input
-            id="booking-phone"
-            type="tel"
-            value={values.phone}
-            onChange={(event) =>
-              setField(
-                "phone",
-                event.target.value,
-              )
-            }
-            placeholder="+91 9876543210"
-            maxLength={20}
-            autoComplete="tel"
-            aria-invalid={Boolean(errors.phone)}
-          />
-
-          {errors.phone && (
-            <p className="text-sm text-destructive">
-              {errors.phone}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* EMAIL */}
-      <div className="space-y-2">
-        <Label htmlFor="booking-email">
-          Email address *
-        </Label>
-
-        <Input
-          id="booking-email"
-          type="email"
-          value={values.email}
-          onChange={(event) =>
-            setField(
-              "email",
-              event.target.value,
-            )
-          }
-          placeholder="you@example.com"
-          maxLength={254}
-          autoComplete="email"
-          aria-invalid={Boolean(errors.email)}
-        />
-
-        {errors.email && (
-          <p className="text-sm text-destructive">
-            {errors.email}
-          </p>
-        )}
-      </div>
-
-      {/* SERVICE + DATE */}
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="booking-service">
-            Service *
-          </Label>
-
-          <Select
-            value={values.service}
-            onValueChange={(value) =>
-              setField("service", value)
-            }
-          >
-            <SelectTrigger
-              id="booking-service"
-              aria-invalid={Boolean(
-                errors.service,
-              )}
-            >
-              <SelectValue placeholder="Choose a service" />
-            </SelectTrigger>
-
-            <SelectContent>
-              {SERVICE_CATEGORIES.map(
-                (category) => (
-                  <SelectItem
-                    key={category.id}
-                    value={category.title}
-                  >
-                    {category.title}
-                  </SelectItem>
-                ),
-              )}
-            </SelectContent>
-          </Select>
-
-          {errors.service && (
-            <p className="text-sm text-destructive">
-              {errors.service}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="booking-date">
-            Preferred date *
-          </Label>
-
-          <Input
-            id="booking-date"
-            type="date"
-            value={values.date}
-            onChange={(event) =>
-              setField(
-                "date",
-                event.target.value,
-              )
-            }
-            aria-invalid={Boolean(errors.date)}
-          />
-
-          {errors.date && (
-            <p className="text-sm text-destructive">
-              {errors.date}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* TIME + SPECIALIST */}
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="booking-time">
-            Preferred time *
-          </Label>
-
-          <Select
-            value={values.time}
-            onValueChange={(value) =>
-              setField("time", value)
-            }
-          >
-            <SelectTrigger
-              id="booking-time"
-              aria-invalid={Boolean(errors.time)}
-            >
-              <SelectValue placeholder="Choose a time" />
-            </SelectTrigger>
-
-            <SelectContent>
-              {TIME_OPTIONS.map((time) => (
-                <SelectItem
-                  key={time}
-                  value={time}
-                >
-                  {time}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {errors.time && (
-            <p className="text-sm text-destructive">
-              {errors.time}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="booking-stylist">
-            Preferred specialist
-          </Label>
-
-          <Select
-            value={values.stylist}
-            onValueChange={(value) =>
-              setField("stylist", value)
-            }
-          >
-            <SelectTrigger
-              id="booking-stylist"
-              aria-invalid={Boolean(
-                errors.stylist,
-              )}
-            >
-              <SelectValue placeholder="Any specialist" />
-            </SelectTrigger>
-
-            <SelectContent>
-              {STYLIST_OPTIONS.map(
-                (stylist) => (
-                  <SelectItem
-                    key={stylist}
-                    value={stylist}
-                  >
-                    {stylist}
-                  </SelectItem>
-                ),
-              )}
-            </SelectContent>
-          </Select>
-
-          {errors.stylist && (
-            <p className="text-sm text-destructive">
-              {errors.stylist}
-            </p>
-          )}
-
-          <p className="text-xs text-muted-foreground">
-            Optional — leave as Any specialist if
-            you don't have a preference.
-          </p>
-        </div>
-      </div>
-
-      {/* OCCASION */}
-      <div className="space-y-2">
-        <Label htmlFor="booking-occasion">
-          Occasion / requirement
-        </Label>
-
-        <Select
-          value={values.occasion}
-          onValueChange={(value) =>
-            setField("occasion", value)
-          }
-        >
-          <SelectTrigger id="booking-occasion">
-            <SelectValue placeholder="Select if applicable" />
-          </SelectTrigger>
-
-          <SelectContent>
-            {OCCASION_OPTIONS.map(
-              (occasion) => (
-                <SelectItem
-                  key={occasion}
-                  value={occasion}
-                >
-                  {occasion}
-                </SelectItem>
-              ),
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* NOTES */}
-      <div className="space-y-2">
-        <Label htmlFor="booking-notes">
-          Additional notes
-        </Label>
-
-        <Textarea
-          id="booking-notes"
-          value={values.notes}
-          onChange={(event) =>
-            setField(
-              "notes",
-              event.target.value,
-            )
-          }
-          placeholder="Anything we should know?"
-          maxLength={500}
-          rows={4}
-          aria-invalid={Boolean(errors.notes)}
-        />
-
-        {errors.notes && (
-          <p className="text-sm text-destructive">
-            {errors.notes}
-          </p>
-        )}
-
-        <p className="text-xs text-muted-foreground">
-          Optional
-        </p>
-      </div>
-
-      {/* SUBMIT */}
-      <button
-        type="submit"
-        disabled={sending}
-        className="inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-semibold text-primary-foreground shadow-gold transition-all duration-200 hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {sending ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <MessageCircle className="h-5 w-5" />
-        )}
-
-        {sending
-          ? "Opening WhatsApp..."
-          : "Book via WhatsApp"}
-      </button>
-
-      <p className="text-center text-xs leading-relaxed text-muted-foreground">
-        Your appointment details will be prepared
-        in WhatsApp for salon confirmation. No
-        payment is taken online.
-      </p>
-    </form>
-  );
-}
+            "Your appointment details

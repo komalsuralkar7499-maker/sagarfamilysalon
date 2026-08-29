@@ -299,3 +299,67 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     ],
   },
 ];
+export const SERVICE_PRICES = [
+  {
+    category: "Haircut & Styling",
+    services: [
+      { name: "Men's Haircut", price: 250 },
+      { name: "Women's Haircut", price: 500 },
+      { name: "Kids' Haircut", price: 200 },
+      { name: "Blow-dry & Styling", price: 400 },
+      { name: "Beard Trim & Shaping", price: 200 },
+    ],
+  },
+
+  {
+    category: "Hair Colour",
+    services: [
+      { name: "Global Hair Colour", price: 1500 },
+      { name: "Highlights", price: 1800 },
+      { name: "Balayage", price: 2500 },
+      { name: "Root Touch-up", price: 800 },
+      { name: "Grey Coverage", price: 1000 },
+    ],
+  },
+
+  {
+    category: "Facial & Cleanup",
+    services: [
+      { name: "Express Cleanup", price: 400 },
+      { name: "Signature Facial", price: 800 },
+      { name: "Hydra Facial", price: 1200 },
+      { name: "De-tan Treatment", price: 600 },
+      { name: "Skin Polishing", price: 900 },
+    ],
+  },
+
+  {
+    category: "Makeup",
+    services: [
+      { name: "Party Makeup", price: 1500 },
+      { name: "Engagement Makeup", price: 2500 },
+      { name: "Eye Makeup", price: 800 },
+      { name: "Saree Draping", price: 500 },
+    ],
+  },
+
+  {
+    category: "Bridal Makeup",
+    services: [
+      { name: "Bridal HD Makeup", price: 8000 },
+      { name: "Bridal Hairstyle", price: 2000 },
+      { name: "Pre-Bridal Package", price: 5000 },
+      { name: "Groom Styling", price: 1500 },
+    ],
+  },
+
+  {
+    category: "Hairstyling",
+    services: [
+      { name: "Curls & Waves", price: 800 },
+      { name: "Braids & Buns", price: 1000 },
+      { name: "Occasion Hairstyling", price: 1200 },
+      { name: "Hair Ironing & Smoothening", price: 2500 },
+    ],
+  },
+];

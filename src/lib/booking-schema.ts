@@ -12,7 +12,10 @@ export const bookingSchema = z.object({
     .trim()
     .min(8, "Please enter a valid phone number")
     .max(20, "Phone number must be under 20 characters")
-    .regex(/^[0-9+\-\s()]+$/, "Phone number contains invalid characters"),
+    .regex(
+      /^[0-9+\-\s()]+$/,
+      "Phone number contains invalid characters",
+    ),
 
   email: z
     .string()
@@ -46,6 +49,12 @@ export const bookingSchema = z.object({
     .trim()
     .min(1, "Please choose a stylist")
     .max(100),
+
+  occasion: z
+    .string()
+    .trim()
+    .max(100, "Occasion must be under 100 characters")
+    .optional(),
 
   notes: z
     .string()
